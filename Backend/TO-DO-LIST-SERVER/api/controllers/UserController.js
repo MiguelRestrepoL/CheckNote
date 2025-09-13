@@ -9,14 +9,22 @@ class UserController {
    */
   async create(req, res) {
     try {
-      const { nombres, apellidos, edad, correo, contrasena } = req.body;
+      const { nombres, apellidos, edad, correo, contrasena, confirmarContrasena} = req.body;
 
       // Validación de datos requeridos
-      if (!nombres || !apellidos || !edad || !correo || !contrasena) {
+      if (!nombres || !apellidos || !edad || !correo || !contrasena || !confirmarContrasena) {
         return res.status(400).json({
           success: false,
           message: 'Todos los campos son requeridos',
-          required: ['nombres', 'apellidos', 'edad', 'correo', 'contrasena']
+          required: ['nombres', 'apellidos', 'edad', 'correo', 'contrasena', 'confirmarContrasena']
+        });
+      }
+
+      if (contrasena !== confirmarContrasena) {
+        return res.status(400).json({
+          success: false,
+          message: 'Las contraseñas no coinciden',
+          error: 'confirmar_contrasena_no_coincide'
         });
       }
 
@@ -28,6 +36,7 @@ class UserController {
           message: 'El correo electrónico ya está registrado'
         });
       }
+      
 
       // Validación adicional de edad
       if (parseInt(edad) < 13) {
