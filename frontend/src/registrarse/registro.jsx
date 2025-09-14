@@ -6,8 +6,7 @@ function Registro() {
     <div className="register-container">
       {/* Lado izquierdo */}
       <div className="register-left">
-        <img src="/logo-checknote.png" alt="Checknote Logo" className="main-logo" />
-        <h1>Checknote</h1>
+        <img src="/logo.png" alt="Checknote Logo" className="main-logo" />
         <p>Organízate más fácil que nunca</p>
       </div>
 

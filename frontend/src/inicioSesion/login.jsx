@@ -8,7 +8,6 @@ function InicioSesion() {
         {/* Logo */}
         <div className="logo">
           <img src="/logo.png" alt="Checknote logo" />
-          <h1>Checknote</h1>
         </div>
 
         <h2>¡Bienvenido nuevamente!</h2>
