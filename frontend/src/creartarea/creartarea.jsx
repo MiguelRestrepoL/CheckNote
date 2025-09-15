@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"; // Importamos useEffect para obtener el userId
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./creartarea.css";
 
@@ -7,6 +7,7 @@ export default function CrearTarea() {
     titulo: "",
     descripcion: "", 
     fechaVencimiento: "", 
+    hora: "", // Agregamos el campo hora al estado
     prioridad: "media", 
     completada: false, 
   });
@@ -14,8 +15,16 @@ export default function CrearTarea() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
- 
-  const userId = localStorage.getItem('userId') || '60d5ec4f2e7f3e001f8b4e4e'; // Ejemplo de userId
+  // Verificar si hay token al cargar el componente
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setError("No hay sesión activa. Redirigiendo al login...");
+      setTimeout(() => {
+        navigate('/login');
+      }, 2000);
+    }
+  }, [navigate]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -25,52 +34,110 @@ export default function CrearTarea() {
     }));
   };
 
-const token = localStorage.getItem('token'); // Obtén el token guardado
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
 
-const handleSubmit = async (e) => {
-  // ... (resto de tu código)
+    // Obtener token y userId
+    const token = localStorage.getItem('token');
+    const userId = localStorage.getItem('userId');
 
-  try {
-    const res = await fetch("https://checknote-27fe.onrender.com/api/v1/tasks", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        // *** Agrega esta línea para enviar el token ***
-        "Authorization": `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        titulo: formData.titulo,
-        descripcion: formData.descripcion,
-        prioridad: formData.prioridad,
-        completada: formData.completada,
-        fechaVencimiento: fechaCompleta,
-        userId: userId, // Sigue enviando el userId si el backend lo necesita explícitamente
-      }),
-    });
-
-    if (!res.ok) {
-      const errorData = await res.json();
-      // Si el error es por token, puedes ser más específico
-      if (res.status === 401 || res.status === 403) {
-         setError("Tu sesión ha expirado o no tienes permisos. Por favor, inicia sesión de nuevo.");
-         // Podrías redirigir a la página de login aquí
-         localStorage.removeItem('token'); // Limpiar token expirado
-         localStorage.removeItem('userId');
-         navigate('/login');
-      } else {
-         setError(errorData.message || "Error al crear la tarea.");
-      }
-      throw new Error(errorData.message || "Error al crear la tarea.");
+    // Verificar que tenemos los datos necesarios
+    if (!token) {
+      setError("No se encontró token de autenticación. Por favor, inicia sesión.");
+      setLoading(false);
+      navigate('/login');
+      return;
     }
 
-    // ... (resto de tu código)
+    if (!userId) {
+      setError("No se encontró información del usuario. Por favor, inicia sesión nuevamente.");
+      setLoading(false);
+      navigate('/login');
+      return;
+    }
 
-  } catch (err) {
-    // ... (manejo de errores)
-  } finally {
-    setLoading(false);
-  }
-};
+    // Combinar fecha y hora en formato ISO
+    let fechaCompleta = null;
+    if (formData.fechaVencimiento && formData.hora) {
+      // Crear fecha completa en formato ISO
+      fechaCompleta = new Date(`${formData.fechaVencimiento}T${formData.hora}:00`).toISOString();
+    } else if (formData.fechaVencimiento) {
+      // Si solo hay fecha, usar las 23:59 del día
+      fechaCompleta = new Date(`${formData.fechaVencimiento}T23:59:00`).toISOString();
+    }
+
+    // Preparar datos para enviar
+    const taskData = {
+      titulo: formData.titulo.trim(),
+      descripcion: formData.descripcion.trim(),
+      prioridad: formData.prioridad,
+      completada: formData.completada,
+      fechaVencimiento: fechaCompleta,
+      userId: userId
+    };
+
+    console.log("Datos a enviar:", taskData); // Para debugging
+    console.log("Token:", token); // Para debugging
+
+    try {
+      const res = await fetch("https://checknote-27fe.onrender.com/api/v1/tasks", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify(taskData),
+      });
+
+      console.log("Status de respuesta:", res.status); // Para debugging
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        console.log("Error del servidor:", errorData); // Para debugging
+        
+        // Manejo específico de errores de autenticación
+        if (res.status === 401) {
+          setError("Tu sesión ha expirado. Redirigiendo al login...");
+          localStorage.removeItem('token');
+          localStorage.removeItem('userId');
+          localStorage.removeItem('userName');
+          setTimeout(() => {
+            navigate('/login');
+          }, 2000);
+          return;
+        } else if (res.status === 403) {
+          setError("No tienes permisos para realizar esta acción.");
+          return;
+        } else if (res.status === 400) {
+          setError(errorData.message || "Datos inválidos. Verifica los campos.");
+          return;
+        } else {
+          setError(errorData.message || `Error del servidor: ${res.status}`);
+          return;
+        }
+      }
+
+      const result = await res.json();
+      console.log("Tarea creada exitosamente:", result); // Para debugging
+      
+      // Redirigir al dashboard o mostrar mensaje de éxito
+      navigate('/dashboard', { 
+        state: { message: "Tarea creada exitosamente" } 
+      });
+
+    } catch (err) {
+      console.error("Error de red:", err); // Para debugging
+      if (err.name === 'TypeError' && err.message.includes('fetch')) {
+        setError("Error de conexión. Verifica tu conexión a internet.");
+      } else {
+        setError("Error inesperado: " + err.message);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="page-root">
@@ -117,7 +184,7 @@ const handleSubmit = async (e) => {
             ></textarea>
 
             {/* Campo combinado de Fecha y Hora */}
-            <div className="date-time-row"> {/* Usando la clase para agrupar */}
+            <div className="date-time-row">
               <div>
                 <label htmlFor="fechaVencimiento">Fecha de vencimiento</label>
                 <input
@@ -135,7 +202,7 @@ const handleSubmit = async (e) => {
                   type="time"
                   id="hora"
                   name="hora"
-                  value={formData.hora} // Asumo que 'hora' se manejará temporalmente aquí
+                  value={formData.hora}
                   onChange={handleChange}
                   required
                 />
@@ -156,7 +223,7 @@ const handleSubmit = async (e) => {
             </select>
 
             {/* Checkbox para 'Completada' (estado) */}
-            <div className="terms"> {/* Reutilizando la clase 'terms' para el checkbox */}
+            <div className="terms">
               <input
                 type="checkbox"
                 id="completada"
@@ -169,7 +236,7 @@ const handleSubmit = async (e) => {
 
             {error && <p className="error">{error}</p>}
             <button type="submit" disabled={loading}>
-              {loading ? "Registrando..." : "Registrar Tarea"}
+              {loading ? "Creando tarea..." : "Crear Tarea"}
             </button>
           </form>
         </div>
@@ -177,7 +244,7 @@ const handleSubmit = async (e) => {
 
       {/* ===== FOOTER ===== */}
       <footer className="footer">
-        <a href="/home"> {/* Usando <a> si no usas react-router para el footer */}
+        <a href="/home">
           <img src="/home.png" alt="home" className="icon" />
           <span>Inicio</span>
         </a>
