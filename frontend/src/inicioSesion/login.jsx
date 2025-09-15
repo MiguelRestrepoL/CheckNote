@@ -3,43 +3,74 @@ import { useNavigate, Link } from "react-router-dom";
 import "./inicioSesion.css";
 
 export default function InicioSesion() {
-  const [correo, setCorreo] = useState("");
-  const [contrasena, setContrasena] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const navigate = useNavigate();
+  const [correo, setCorreo] = useState("");
+  const [contrasena, setContrasena] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
 
-    try {
-      const res = await fetch("https://checknote-27fe.onrender.com/api/v1/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ correo, contrasena }),
-      });
+    try {
+      const loginRes = await fetch("https://checknote-27fe.onrender.com/api/v1/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ correo, contrasena }),
+      });
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || "Credenciales incorrectas. Inténtalo de nuevo.");
-      }
+      if (!loginRes.ok) {
+        const errorData = await loginRes.json();
+        throw new Error(errorData.message || "Credenciales incorrectas. Inténtalo de nuevo.");
+      }
 
-      const data = await res.json();
-      // Asume que tu API devuelve un token y un objeto de usuario
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user)); // Guarda el usuario para usar sus datos en el frontend
-      navigate("/home", { state: { success: "¡Inicio de sesión exitoso!" } });
+      const loginData = await loginRes.json();
+      const token = loginData.token;
+      const user = loginData.user;
 
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('userId', user._id); 
+      localStorage.setItem('userName', user.nombres); 
+      const verifyRes = await fetch("https://checknote-27fe.onrender.com/api/v1/auth/verify", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+
+          "Authorization": `Bearer ${token}`
+        },
+
+      });
+
+      if (!verifyRes.ok) {
+
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('userName');
+        throw new Error("La sesión no es válida. Por favor, inicia sesión de nuevo.");
+      }
+
+
+      navigate("/home", { state: { success: "¡Inicio de sesión exitoso!" } });
+
+    } catch (err) {
+      setError(err.message);
+
+      if (err.message !== "La sesión no es válida. Por favor, inicia sesión de nuevo.") {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('userName');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="login-container">
