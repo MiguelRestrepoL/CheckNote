@@ -12,19 +12,15 @@ export default function Tasks() {
       setLoading(true);
       setError("");
       try {
-        // --- INICIO: FETCH REAL AL BACKEND ---
-        // Asegúrate de que la URL sea correcta y que tu backend esté corriendo.
-        const userId = localStorage.getItem("userId"); // Asumiendo que guardas el ID del usuario
+        const userId = localStorage.getItem("userId"); 
         if (!userId) {
           throw new Error("Usuario no autenticado. Por favor, inicia sesión.");
         }
 
-        const res = await fetch("http://localhost:3001/api/tasks", {
-          method: "GET", // O POST si necesitas enviar algo, pero GET es lo común para listar
+        const res = await fetch("https://checknote-27fe.onrender.com/api/v1/tasks", {
+          method: "GET", 
           headers: {
             "Content-Type": "application/json",
-            // Si usas autenticación por token, añádelo aquí:
-            // "Authorization": `Bearer ${localStorage.getItem("token")}`
           },
         });
 
