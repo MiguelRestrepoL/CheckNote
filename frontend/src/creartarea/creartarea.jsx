@@ -31,9 +31,6 @@ export default function CrearTarea() {
     setError("");
     setLoading(true);
 
-    // Combinar fecha y hora en un solo campo de fecha/hora si es necesario para tu backend
-    // O ajusta tu backend para que acepte fecha y hora por separado.
-    // Aquí asumimos que el backend espera un objeto Date, por lo que combinaremos fecha y hora.
     let fechaCompleta = null;
     if (formData.fechaVencimiento && formData.hora) {
       const [year, month, day] = formData.fechaVencimiento.split('-');
@@ -42,12 +39,10 @@ export default function CrearTarea() {
     }
 
     try {
-      const res = await fetch("http://localhost:3001/api/tasks", {
+      const res = await fetch("https://checknote-27fe.onrender.com/api/v1/tasks", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          // Si usas autenticación por token, inclúyelo aquí:
-          // "Authorization": `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify({
           titulo: formData.titulo,
