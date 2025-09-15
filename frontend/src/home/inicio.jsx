@@ -1,7 +1,11 @@
 import React from "react";
+import { useLocation, Link } from "react-router-dom";
 import "./inicio.css";
 
 export default function Inicio() {
+  const location = useLocation();
+  const successMessage = location.state?.success;
+
   return (
     <div className="page-root">
       {/* TOPBAR */}
@@ -26,6 +30,10 @@ export default function Inicio() {
       {/* MAIN */}
       <main className="main">
         <div className="center-column">
+          {/* ⚡ MENSAJE DE ÉXITO */}
+          {successMessage && (
+            <div className="success-message">{successMessage}</div>
+          )}
 
           {/* tarjeta progreso */}
           <section className="task-card">
@@ -89,15 +97,17 @@ export default function Inicio() {
 
           {/* boton + */}
           <div className="add-wrap">
-            <button className="add-btn">＋</button>
+            <Link to="/crear-tarea" className="add-btn">＋</Link>
           </div>
         </div>
       </main>
 
       {/* FOOTER */}
       <footer className="footer">
-        <img src="/home.png" alt="home" className="icon" />
-        <span>Inicio</span>
+        <Link to="/home">
+          <img src="/home.png" alt="home" className="icon" />
+          <span>Inicio</span>
+        </Link>
       </footer>
     </div>
   );

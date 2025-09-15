@@ -1,0 +1,162 @@
+/* Variables (si las usas en tu proyecto, ajústalas o elimínalas si no) */
+:root {
+  --card-2: #1f2937; /* Fondo oscuro de la tarjeta */
+  --radius-lg: 12px;
+  --field-bg: #374151; /* Fondo de los campos de entrada */
+  --muted: #9ca3af; /* Color de texto atenuado */
+  --accent: #10b981; /* Color verde principal */
+  --shadow: rgba(0, 0, 0, 0.25);
+}
+
+/* Estilos generales para el cuerpo, si no tienes un layout global */
+body {
+  font-family: 'Inter', sans-serif; /* O la fuente que uses */
+  background-color: #111827; /* Fondo general oscuro */
+  color: #e6eef6;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  margin: 0;
+  padding: 20px; /* Añade padding para que no se pegue a los bordes en pantallas pequeñas */
+  box-sizing: border-box;
+}
+
+/* Tarjeta principal */
+.forgot-card-pw2 {
+  width: 100%;
+  max-width: 420px;
+  background: var(--card-2);
+  border-radius: var(--radius-lg);
+  padding: 32px 24px; /* Aumentado un poco el padding */
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* Aumentado el gap */
+  box-shadow: 0 18px 40px var(--shadow);
+  text-align: center;
+}
+
+/* Logo arriba */
+.forgot-card-pw2 .logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px; /* Aumentado el gap */
+  margin-bottom: 10px;
+}
+
+.forgot-card-pw2 .logo img {
+  width: 40px;
+  height: 40px;
+}
+
+.forgot-card-pw2 .logo span {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--accent);
+}
+
+/* Título principal */
+.forgot-card-pw2 h2 {
+  font-size: 1.2rem; /* Tamaño de fuente ligeramente mayor */
+  color: #e6eef6;
+  margin-bottom: 16px; /* Aumentado el margen inferior */
+  font-weight: 500;
+}
+
+/* Grupo de input (icono + campo) */
+.forgot-card-pw2 .input-group {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* Espacio entre el ícono y el input */
+  background: var(--field-bg);
+  border-radius: 8px;
+  padding: 10px 12px; /* Padding ajustado */
+}
+
+.forgot-card-pw2 .input-group .icon {
+  width: 24px; /* Tamaño del ícono */
+  height: 24px;
+  opacity: 0.8; /* Ligeramente atenuado */
+}
+
+.forgot-card-pw2 input {
+  flex-grow: 1; /* Permite que el input ocupe el espacio restante */
+  padding: 8px 0; /* Padding vertical para alineación */
+  border: none;
+  background: transparent; /* Fondo transparente, el color lo da el input-group */
+  color: #e6eef6;
+  font-size: 1rem;
+}
+
+.forgot-card-pw2 input::placeholder {
+  color: var(--muted);
+}
+
+/* Botón */
+.forgot-card-pw2 button {
+  margin-top: 16px; /* Más espacio antes del botón */
+  background: linear-gradient(180deg, var(--accent), #059669);
+  color: white;
+  padding: 14px 12px; /* Padding un poco más grande */
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  border: none; /* Asegurarse de que no tenga borde */
+  font-size: 1rem;
+  transition: opacity 0.2s ease;
+}
+
+.forgot-card-pw2 button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.forgot-card-pw2 button:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+/* Mensajes de error */
+.forgot-card-pw2 .error {
+  color: #ef4444; /* Rojo para errores */
+  font-size: 0.85rem;
+  margin-top: -10px; /* Ajuste para acercarlo más al botón */
+}
+
+/* Estilos del link de registro, si se llegara a incluir */
+.forgot-card-pw2 .register {
+  margin-top: 20px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.forgot-card-pw2 .register a {
+  color: #10b981;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+  .forgot-card-pw2 {
+    margin: 30px auto;
+    padding: 24px 16px;
+  }
+  .forgot-card-pw2 .logo {
+    gap: 8px;
+  }
+  .forgot-card-pw2 .logo img {
+    width: 35px;
+    height: 35px;
+  }
+  .forgot-card-pw2 .logo span {
+    font-size: 1.3rem;
+  }
+  .forgot-card-pw2 h2 {
+    font-size: 1.1rem;
+  }
+  .forgot-card-pw2 button {
+    padding: 12px 10px;
+    font-size: 0.95rem;
+  }
+}
