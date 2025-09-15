@@ -4,15 +4,13 @@ const UserController = require("../controllers/UserController");
 const {authenticateToken} = require('../middleware/authMiddleware');
 
 
-const userController = new UserController();
-
+const userController = UserController;
 
 router.get("/", (req, res) => userController.getAll(req, res));
 router.get("/:id", (req, res) => userController.read(req, res));
 router.post("/", (req, res) => userController.create(req, res));
 router.put("/:id", (req, res) => userController.update(req, res));
 router.delete("/:id", (req, res) => userController.delete(req, res));
-
 
 /**
  * GET /api/v1/users/me
