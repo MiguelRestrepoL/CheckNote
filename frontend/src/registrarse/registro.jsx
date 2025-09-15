@@ -14,11 +14,11 @@ function Registro() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
+    const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
-    // Validaciones del lado del cliente
+    // Validaciones del lado del cliente (mantenerlas)
     if (contrasena !== confirmarContrasena) {
       setError("Las contraseñas no coinciden.");
       return;
@@ -49,11 +49,15 @@ function Registro() {
           edad: parseInt(edad, 10), // Asegurarse de que la edad sea un número
           correo,
           contrasena,
+          // ¡Asegúrate de enviar confirmarContrasena al backend!
+          confirmarContrasena
         }),
       });
 
       if (!res.ok) {
         const errorData = await res.json();
+        // Muestra el mensaje de error del backend si está disponible
+        setError(errorData.message || "Error en el registro. Inténtalo de nuevo.");
         throw new Error(errorData.message || "Error en el registro. Inténtalo de nuevo.");
       }
 
@@ -63,7 +67,9 @@ function Registro() {
       });
 
     } catch (err) {
-      setError(err.message);
+      // El error ya se ha establecido en setError si res.ok es false,
+      // pero podrías querer manejar otros errores de red aquí si es necesario.
+      // setError(err.message); // Si necesitas re-establecer el error por alguna razón
     } finally {
       setLoading(false);
     }
