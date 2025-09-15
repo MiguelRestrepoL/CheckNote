@@ -25,48 +25,52 @@ export default function CrearTarea() {
     }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
+const token = localStorage.getItem('token'); // Obtén el token guardado
 
-    let fechaCompleta = null;
-    if (formData.fechaVencimiento && formData.hora) {
-      const [year, month, day] = formData.fechaVencimiento.split('-');
-      const [hours, minutes] = formData.hora.split(':');
-      fechaCompleta = new Date(year, month - 1, day, hours, minutes);
-    }
+const handleSubmit = async (e) => {
+  // ... (resto de tu código)
 
-    try {
-      const res = await fetch("https://checknote-27fe.onrender.com/api/v1/tasks", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          titulo: formData.titulo,
-          descripcion: formData.descripcion,
-          prioridad: formData.prioridad,
-          completada: formData.completada, // Este valor se envía directamente
-          fechaVencimiento: fechaCompleta,
-          userId: userId, // Asegúrate de que el userId esté disponible
-        }),
-      });
+  try {
+    const res = await fetch("https://checknote-27fe.onrender.com/api/v1/tasks", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        // *** Agrega esta línea para enviar el token ***
+        "Authorization": `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        titulo: formData.titulo,
+        descripcion: formData.descripcion,
+        prioridad: formData.prioridad,
+        completada: formData.completada,
+        fechaVencimiento: fechaCompleta,
+        userId: userId, // Sigue enviando el userId si el backend lo necesita explícitamente
+      }),
+    });
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || "Error al crear la tarea.");
+    if (!res.ok) {
+      const errorData = await res.json();
+      // Si el error es por token, puedes ser más específico
+      if (res.status === 401 || res.status === 403) {
+         setError("Tu sesión ha expirado o no tienes permisos. Por favor, inicia sesión de nuevo.");
+         // Podrías redirigir a la página de login aquí
+         localStorage.removeItem('token'); // Limpiar token expirado
+         localStorage.removeItem('userId');
+         navigate('/login');
+      } else {
+         setError(errorData.message || "Error al crear la tarea.");
       }
-
-      // Tarea creada exitosamente
-      navigate("/home", { state: { success: "Tarea registrada exitosamente ✅" } });
-
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+      throw new Error(errorData.message || "Error al crear la tarea.");
     }
-  };
+
+    // ... (resto de tu código)
+
+  } catch (err) {
+    // ... (manejo de errores)
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="page-root">
