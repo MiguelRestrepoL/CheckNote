@@ -1,11 +1,13 @@
+
 const mongoose = require("mongoose");
 
 const TaskSchema = new mongoose.Schema({
-  title:    { type: String, required: true },
-  detail:   { type: String },
-  datetime: { type: Date },
-  status:   { type: String, enum: ["pending", "done"], default: "pending" },
-  userId:   { type: mongoose.Schema.Types.ObjectId, ref: "User " }
+  titulo:    { type: String, required: true },
+  detalles:   { type: String },
+  fecha: { type: Date },
+  estado:   { type: String, enum: ["pendiente", "terminada"], default: "pendiente" },
+  clienteId:   { type: mongoose.Schema.Types.ObjectId, ref: "cliente" }
 }, { timestamps: true });
 
-module.exports = mongoose.model("Task", TaskSchema);
+module.exports = mongoose.model("Tarea", TaskSchema);
+
