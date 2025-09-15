@@ -123,7 +123,7 @@ export default function CrearTarea() {
       console.log("Tarea creada exitosamente:", result); // Para debugging
       
       // Redirigir al dashboard o mostrar mensaje de éxito
-      navigate('/dashboard', { 
+      navigate('/home', { 
         state: { message: "Tarea creada exitosamente" } 
       });
 
