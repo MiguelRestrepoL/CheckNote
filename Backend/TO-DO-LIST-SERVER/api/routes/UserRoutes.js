@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const UserController = require("../controllers/UserController");
 const {authenticateToken} = require('../middlewares/authMiddleware');
-const UserController = require("../controllers/UserController");
+
 const UserController = new UserController();
 
 router.get("/", (req, res) => UserController.getAll(req, res));
