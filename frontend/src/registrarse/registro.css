@@ -1,0 +1,219 @@
+/* Contenedor general */
+.register-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  /* Ajustado el gradiente para que coincida con otros estilos si es necesario */
+  background: linear-gradient(to bottom, #0b1220, #0f172a); /* Usando los colores del tema oscuro */
+  padding: 2rem;
+  gap: 4rem;
+}
+
+/* Lado izquierdo */
+.register-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  color: white;
+  max-width: 300px;
+}
+
+.main-logo {
+  width: 250px; /* Ajustado tamaño del logo */
+  margin-bottom: 1rem;
+}
+
+.register-left p {
+  font-size: 1.2rem; /* Tamaño de texto más acorde */
+  color: #9ca3af; /* Color de texto atenuado */
+}
+
+/* Tarjeta derecha */
+.register-card {
+  background-color: #1f2937; /* Fondo oscuro de la tarjeta */
+  padding: 2rem;
+  border-radius: 15px; /* Border-radius más sutil */
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+  color: white;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25); /* Sombra más acorde */
+}
+
+/* Título */
+.register-card h2 {
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+  color: #e6eef6; /* Color blanco más brillante */
+  font-weight: 500;
+}
+
+/* Formulario */
+.register-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem; /* Espacio entre campos */
+}
+
+/* Campos */
+.field-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #374151; /* Fondo de los campos de entrada */
+  border-radius: 8px; /* Bordes redondeados para los campos */
+  padding: 10px 12px; /* Padding ajustado */
+}
+
+.field-icon {
+  width: 24px; /* Tamaño de ícono */
+  height: 24px;
+  flex-shrink: 0;
+  opacity: 0.8; /* Íconos ligeramente atenuados */
+}
+
+.field-icon.empty {
+  width: 24px; /* Mismo espacio que un ícono normal para mantener alineación */
+  height: 24px;
+}
+
+.field-input {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  text-align: left; /* Alinea la etiqueta a la izquierda */
+}
+
+.field-input label {
+  font-size: 13px;
+  margin-bottom: 4px;
+  color: #9ca3af; /* Color de etiqueta atenuado */
+}
+
+.field-input input {
+  padding: 8px 0; /* Padding vertical para mejor alineación */
+  border: none;
+  background: transparent; /* Fondo transparente, el color lo da el field-group */
+  color: #e6eef6; /* Color blanco brillante para el texto del input */
+  font-size: 1rem; /* Tamaño de fuente estándar */
+  outline: none; /* Quita el borde al hacer foco */
+}
+
+/* Estilos específicos para el input de edad */
+.field-input input[type="number"] {
+  /* Puedes añadir estilos específicos si son necesarios */
+}
+
+/* Checkbox */
+.terms {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  text-align: left;
+  color: #9ca3af; /* Color de texto atenuado */
+}
+
+.terms input[type="checkbox"] {
+  accent-color: #10b981; /* Color del check del checkbox */
+  cursor: pointer;
+}
+
+/* Botón registrar */
+.btn-register {
+  margin-top: 16px; /* Más espacio antes del botón */
+  background: linear-gradient(180deg, #10b981, #059669); /* Gradiente verde */
+  color: white;
+  border: none;
+  border-radius: 8px; /* Bordes redondeados */
+  padding: 12px 10px; /* Padding ajustado */
+  cursor: pointer;
+  font-size: 1rem; /* Tamaño de fuente estándar */
+  font-weight: bold; /* Texto en negrita */
+  transition: opacity 0.2s ease;
+}
+
+.btn-register:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-register:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+/* Google */
+.google-login {
+  margin-top: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 15px;
+  border: 1px solid #374151; /* Borde acorde al tema */
+  background: #1f2937; /* Fondo oscuro */
+  color: #e6eef6; /* Color de texto */
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+  transition: background-color 0.2s ease;
+}
+
+.google-login img {
+  width: 20px;
+  height: 20px;
+}
+
+.google-login:hover {
+  background: #374151; /* Fondo más oscuro al pasar el mouse */
+}
+
+/* Links */
+.links {
+  margin-top: 20px; /* Espacio mayor */
+  font-size: 0.85rem;
+  color: #9ca3af; /* Color de texto atenuado */
+}
+
+.links a {
+  color: #10b981; /* Color verde principal */
+  font-weight: 600;
+  text-decoration: none;
+}
+
+/* Mensaje de error */
+.error {
+  color: #ef4444; /* Rojo para errores */
+  font-size: 0.85rem;
+  margin-top: -10px; /* Ajuste para acercarlo más al botón/campos */
+  margin-bottom: 10px; /* Espacio después del error */
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .register-container {
+    flex-direction: column;
+    gap: 2rem;
+    padding: 1rem;
+  }
+  .register-left {
+    align-items: center;
+    max-width: 100%;
+    text-align: center;
+  }
+  .main-logo {
+    width: 200px;
+    margin-bottom: 1rem;
+  }
+  .register-left p {
+    font-size: 1rem;
+  }
+  .register-card {
+    max-width: 90%;
+    padding: 1.5rem;
+  }
+}

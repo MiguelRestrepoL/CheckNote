@@ -1,16 +1,19 @@
 {
   "name": "checknote-frontend",
   "version": "1.0.0",
-  "description": "Frontend for CheckNote using Vite + JS + HTML + CSS",
+  "private": true,
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"
   },
-  "keywords": [],
-  "author": "",
-  "license": "MIT",
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^7.9.1"
+  },
   "devDependencies": {
+    "@vitejs/plugin-react": "^4.2.0",
     "vite": "^5.0.0"
   }
 }
