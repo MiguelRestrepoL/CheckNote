@@ -3,14 +3,15 @@ const router = express.Router();
 const UserController = require("../controllers/UserController");
 const {authenticateToken} = require('../middlewares/authMiddleware');
 
-const UserController = new UserController();
 
-router.get("/", (req, res) => UserController.getAll(req, res));
-router.get("/:id", (req, res) => UserController.read(req, res));
-router.post("/", (req, res) => UserController.create(req, res));
-router.put("/:id", (req, res) => UserController.update(req, res));
-router.delete("/:id", (req, res) => UserController.delete(req, res));
-router.post('/', userController.create.bind(userController));
+const userController = new UserController();
+
+
+router.get("/", (req, res) => userController.getAll(req, res));
+router.get("/:id", (req, res) => userController.read(req, res));
+router.post("/", (req, res) => userController.create(req, res));
+router.put("/:id", (req, res) => userController.update(req, res));
+router.delete("/:id", (req, res) => userController.delete(req, res));
 
 
 /**
@@ -40,7 +41,6 @@ router.put('/me', authenticateToken, userController.updateProfile.bind(userContr
 router.delete('/me', authenticateToken, userController.deleteProfile.bind(userController));
 
 //  RUTAS ADICIONALES PROTEGIDAS
-
 /**
  * GET /api/v1/users/:id
  * Obtener usuario específico por ID
@@ -58,8 +58,3 @@ router.get('/:id', authenticateToken, userController.read.bind(userController));
 router.get('/', authenticateToken, userController.getAll.bind(userController));
 
 module.exports = router;
-
-
-
-
-
