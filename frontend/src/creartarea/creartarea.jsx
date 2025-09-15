@@ -5,17 +5,16 @@ import "./creartarea.css";
 export default function CrearTarea() {
   const [formData, setFormData] = useState({
     titulo: "",
-    descripcion: "", // Cambiado de 'detalles' a 'descripcion' para coincidir con el modelo
-    fechaVencimiento: "", // Cambiado de 'fecha' a 'fechaVencimiento'
-    prioridad: "media", // Valor por defecto para prioridad
-    completada: false, // El estado inicial es 'Pendiente'
+    descripcion: "", 
+    fechaVencimiento: "", 
+    prioridad: "media", 
+    completada: false, 
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Obtener el ID del usuario (esto debería venir de tu estado de autenticación)
-  // Por ahora, usamos un valor de ejemplo. Deberías obtenerlo de localStorage o de tu contexto de autenticación.
+ 
   const userId = localStorage.getItem('userId') || '60d5ec4f2e7f3e001f8b4e4e'; // Ejemplo de userId
 
   const handleChange = (e) => {
