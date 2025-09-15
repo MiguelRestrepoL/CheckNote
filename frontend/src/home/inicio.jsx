@@ -3,112 +3,121 @@ import { useLocation, Link } from "react-router-dom";
 import "./inicio.css";
 
 export default function Inicio() {
-  const location = useLocation();
-  const successMessage = location.state?.success;
+  const location = useLocation();
+  const successMessage = location.state?.success;
 
-  return (
-    <div className="page-root">
-      {/* TOPBAR */}
-      <header className="topbar">
-        <div className="topbar-left">
-          <img src="/usuario.png" alt="usuario" className="icon user-icon" />
-          <span className="username">{'{user_name}'}</span>
-        </div>
+  // Recupera los datos del usuario del localStorage, si están disponibles
+  const storedUser = localStorage.getItem('user');
+  const user = storedUser ? JSON.parse(storedUser) : { nombres: 'Usuario' }; // Valor por defecto si no hay usuario
 
-        <div className="topbar-center">
-          <div className="search-wrap">
-            <span className="search-icon">🔍</span>
-            <input className="search-input" placeholder="Buscar" />
-          </div>
-        </div>
+  return (
+    <div className="page-root">
+      {/* TOPBAR */}
+      <header className="topbar">
+        <div className="topbar-left">
+          {/* Asumiendo que tienes una imagen de perfil o un avatar aquí */}
+          {/* <img src={user.profilePic || "/default-avatar.png"} alt="usuario" className="icon user-icon" /> */}
+          <span className="username">{user.nombres || 'Invitado'}</span> {/* Muestra el nombre del usuario */}
+        </div>
 
-        <div className="topbar-right">
-          <img src="/settings.png" alt="settings" className="icon" />
-        </div>
-      </header>
+        <div className="topbar-center">
+          <div className="search-wrap">
+            <span className="search-icon">🔍</span>
+            <input className="search-input" placeholder="Buscar tareas..." />
+          </div>
+        </div>
 
-      {/* MAIN */}
-      <main className="main">
-        <div className="center-column">
-          {/* ⚡ MENSAJE DE ÉXITO */}
-          {successMessage && (
-            <div className="success-message">{successMessage}</div>
-          )}
+        <div className="topbar-right">
+          {/* Asumiendo que tienes una ruta para la configuración */}
+          <Link to="/settings">
+            <img src="/settings.png" alt="settings" className="icon" />
+          </Link>
+        </div>
+      </header>
 
-          {/* tarjeta progreso */}
-          <section className="task-card">
-            <h3 className="task-title">{'{nombre_tarea}'}</h3>
-            <p className="task-sub">Progreso de la tarea</p>
+      {/* MAIN */}
+      <main className="main">
+        <div className="center-column">
+          {/* ⚡ MENSAJE DE ÉXITO */}
+          {successMessage && (
+            <div className="success-message">{successMessage}</div>
+          )}
 
-            <div className="progress-wrap">
-              <div className="progress-bar">
-                <div className="progress" style={{ width: "48%" }} />
-              </div>
-            </div>
+          {/* tarjeta progreso (ejemplo, podrías fetch datos reales aquí) */}
+          <section className="task-card">
+            <h3 className="task-title">Ejemplo de Tarea Importante</h3>
+            <p className="task-sub">Progreso de la tarea</p>
 
-            <div className="progress-meta">
-              <span>48%</span>
-              <span>Prioridad</span>
-            </div>
-          </section>
+            <div className="progress-wrap">
+              <div className="progress-bar">
+                <div className="progress" style={{ width: "48%" }} />
+              </div>
+            </div>
 
-          {/* filtros */}
-          <div className="filters">
-            <button className="filter">📋 Todas</button>
-            <button className="filter">📅 Calendario</button>
-            <button className="filter">⭐ Prioridad</button>
-          </div>
+            <div className="progress-info"> {/* Renombrado de progress-meta a progress-info */}
+              <span>48% completado</span>
+              <span>Prioridad: Media</span> {/* Ejemplo de prioridad */}
+            </div>
+          </section>
 
-          {/* lista de tareas */}
-          <div className="task-list">
-            <div className="task-row">
-              <div className="task-left">
-                <span className="task-ico">📄</span>
-                <span className="task-label">Tareas totales</span>
-              </div>
-              <div className="task-right">
-                <span className="task-number">20</span>
-                <span className="task-arrow">›</span>
-              </div>
-            </div>
+          {/* filtros */}
+          <div className="filters">
+            {/* Cambiado el botón "Todas" a un Link */}
+            <Link to="/tareas" className="filter">📋 Todas</Link>
+            <button className="filter">📅 Calendario</button>
+            <button className="filter">⭐ Prioridad</button>
+          </div>
 
-            <div className="task-row highlighted">
-              <div className="task-left">
-                <span className="task-ico">✅</span>
-                <span className="task-label">Tareas completadas</span>
-              </div>
-              <div className="task-right">
-                <span className="task-number done">15</span>
-                <span className="task-arrow">›</span>
-              </div>
-            </div>
+          {/* lista de tareas (ejemplo, deberías fetch datos reales) */}
+          <div className="task-list">
+            <div className="task-row">
+              <div className="task-left">
+                <span className="task-ico">📄</span>
+                <span className="task-label">Tareas totales</span>
+              </div>
+              <div className="task-right">
+                <span className="task-number">20</span>
+                <span className="task-arrow">›</span>
+              </div>
+            </div>
 
-            <div className="task-row">
-              <div className="task-left">
-                <span className="task-ico">📂</span>
-                <span className="task-label">Tareas pendientes</span>
-              </div>
-              <div className="task-right">
-                <span className="task-number pending">5</span>
-                <span className="task-arrow">›</span>
-              </div>
-            </div>
-          </div>
+            <div className="task-row highlighted">
+              <div className="task-left">
+                <span className="task-ico">✅</span>
+                <span className="task-label">Tareas completadas</span>
+              </div>
+              <div className="task-right">
+                <span className="task-number done">15</span>
+                <span className="task-arrow">›</span>
+              </div>
+            </div>
 
-          {/* boton + */}
-          <div className="add-wrap">
-            <Link to="/crear-tarea" className="add-btn">＋</Link>
-          </div>
-        </div>
-      </main>
+            <div className="task-row">
+              <div className="task-left">
+                <span className="task-ico">📂</span>
+                <span className="task-label">Tareas pendientes</span>
+              </div>
+              <div className="task-right">
+                <span className="task-number pending">5</span>
+                <span className="task-arrow">›</span>
+              </div>
+            </div>
+          </div>
 
-      {/* FOOTER */}
-      <footer className="footer">
-        <Link to="/home">
-          <img src="/home.png" alt="home" className="icon" />
-          <span>Inicio</span>
-        </Link>
-      </footer>
-    </div>
-  );
+          {/* boton + */}
+          <div className="add-wrap">
+            <Link to="/crear-tarea" className="add-btn">＋</Link>
+          </div>
+        </div>
+      </main>
+
+      {/* FOOTER */}
+      <footer className="footer">
+        <Link to="/home">
+          <img src="/home.png" alt="home" className="icon" />
+          <span>Inicio</span>
+        </Link>
+      </footer>
+    </div>
+  );
 }

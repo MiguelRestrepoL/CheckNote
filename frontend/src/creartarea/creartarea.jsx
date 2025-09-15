@@ -1,81 +1,74 @@
-import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import React, { useState, useEffect } from "react"; // Importamos useEffect para obtener el userId
+import { useNavigate } from "react-router-dom";
 import "./creartarea.css";
 
 export default function CrearTarea() {
   const [formData, setFormData] = useState({
     titulo: "",
-    detalles: "",
-    fecha: "",
-    hora: "",
-    estado: "pendiente", // Corresponde a completada: false
-    prioridad: "media", // Nuevo campo según tu modelo
+    descripcion: "", // Cambiado de 'detalles' a 'descripcion' para coincidir con el modelo
+    fechaVencimiento: "", // Cambiado de 'fecha' a 'fechaVencimiento'
+    prioridad: "media", // Valor por defecto para prioridad
+    completada: false, // El estado inicial es 'Pendiente'
   });
-
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-
   const navigate = useNavigate();
 
+  // Obtener el ID del usuario (esto debería venir de tu estado de autenticación)
+  // Por ahora, usamos un valor de ejemplo. Deberías obtenerlo de localStorage o de tu contexto de autenticación.
+  const userId = localStorage.getItem('userId') || '60d5ec4f2e7f3e001f8b4e4e'; // Ejemplo de userId
+
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(""); // Limpiar errores previos
+    setError("");
     setLoading(true);
 
-    // Preparar los datos para enviar a la API
-    // Combinar fecha y hora en un objeto Date para el backend
-    const fechaCompleta = formData.fecha && formData.hora ? new Date(`${formData.fecha}T${formData.hora}:00`) : null;
-
-    // Convertir el estado a booleano para el backend
-    const completada = formData.estado === "completada";
-
-    // Obtener el ID del usuario logueado (asumiendo que está en localStorage)
-    const userToken = localStorage.getItem('token');
-    if (!userToken) {
-        setError("Debes iniciar sesión para crear tareas.");
-        setLoading(false);
-        return;
+    // Combinar fecha y hora en un solo campo de fecha/hora si es necesario para tu backend
+    // O ajusta tu backend para que acepte fecha y hora por separado.
+    // Aquí asumimos que el backend espera un objeto Date, por lo que combinaremos fecha y hora.
+    let fechaCompleta = null;
+    if (formData.fechaVencimiento && formData.hora) {
+      const [year, month, day] = formData.fechaVencimiento.split('-');
+      const [hours, minutes] = formData.hora.split(':');
+      fechaCompleta = new Date(year, month - 1, day, hours, minutes);
     }
-    // Aquí deberías decodificar el token o tener el ID de usuario disponible de otra forma.
-    // Por ahora, asumimos que puedes obtenerlo. Si no, deberás ajustar cómo se recupera.
-    // Ejemplo: const userId = JSON.parse(localStorage.getItem('user'))._id;
-
-    // **Simulación:** Si no tienes el ID del usuario disponible, puedes comentar esta línea.
-    // En un caso real, obtendrías el userId del token decodificado o de alguna variable de contexto.
-    // const userId = "tu_user_id_aqui"; // Reemplaza con el ID real del usuario
 
     try {
-      const response = await fetch("http://localhost:3001/api/tasks", {
+      const res = await fetch("http://localhost:3001/api/tasks", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${userToken}` // Envía el token de autenticación
+          // Si usas autenticación por token, inclúyelo aquí:
+          // "Authorization": `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify({
           titulo: formData.titulo,
-          descripcion: formData.detalles,
-          fechaVencimiento: fechaCompleta,
-          completada: completada,
+          descripcion: formData.descripcion,
           prioridad: formData.prioridad,
-          // userId: userId, // Agrega el ID del usuario si lo obtuviste
+          completada: formData.completada, // Este valor se envía directamente
+          fechaVencimiento: fechaCompleta,
+          userId: userId, // Asegúrate de que el userId esté disponible
         }),
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        navigate("/home", { state: { success: "Tarea registrada exitosamente ✅" } });
-      } else {
-        // Manejar errores de la API
-        setError(data.message || "Error al registrar la tarea. Inténtalo de nuevo.");
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Error al crear la tarea.");
       }
+
+      // Tarea creada exitosamente
+      navigate("/home", { state: { success: "Tarea registrada exitosamente ✅" } });
+
     } catch (err) {
-      setError("Error de conexión con el servidor.");
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -83,16 +76,16 @@ export default function CrearTarea() {
 
   return (
     <div className="page-root">
-      {/* ===== TOPBAR IGUAL A INICIO ===== */}
+      {/* ===== TOPBAR ===== */}
       <header className="topbar">
         <div className="topbar-left">
           <img src="/usuario.png" alt="usuario" className="icon user-icon" />
-          <span className="username">{'{user_name}'}</span>
+          <span className="username">{localStorage.getItem('userName') || 'Usuario'}</span>
         </div>
         <div className="topbar-center">
           <div className="search-wrap">
             <span className="search-icon">🔍</span>
-            <input className="search-input" placeholder="Buscar" />
+            <input className="search-input" placeholder="Buscar tareas..." />
           </div>
         </div>
         <div className="topbar-right">
@@ -104,9 +97,10 @@ export default function CrearTarea() {
       <main className="main">
         <div className="form-wrap">
           <form onSubmit={handleSubmit}>
-            <label>Título</label>
+            <label htmlFor="titulo">Título</label>
             <input
               type="text"
+              id="titulo"
               name="titulo"
               value={formData.titulo}
               onChange={handleChange}
@@ -114,42 +108,45 @@ export default function CrearTarea() {
               required
             />
 
-            <label>Detalles</label>
+            <label htmlFor="descripcion">Detalles</label>
             <textarea
-              name="detalles"
-              value={formData.detalles}
+              id="descripcion"
+              name="descripcion"
+              value={formData.descripcion}
               onChange={handleChange}
               placeholder="Escribe los detalles..."
               required
             ></textarea>
 
-            {/* ----- Nueva estructura para fecha y hora ----- */}
-            <div className="date-time-row">
+            {/* Campo combinado de Fecha y Hora */}
+            <div className="date-time-row"> {/* Usando la clase para agrupar */}
               <div>
-                <label>Fecha para terminar tarea</label>
+                <label htmlFor="fechaVencimiento">Fecha de vencimiento</label>
                 <input
                   type="date"
-                  name="fecha"
-                  value={formData.fecha}
+                  id="fechaVencimiento"
+                  name="fechaVencimiento"
+                  value={formData.fechaVencimiento}
                   onChange={handleChange}
                   required
                 />
               </div>
               <div>
-                <label>Hora para terminar tarea</label>
+                <label htmlFor="hora">Hora de vencimiento</label>
                 <input
                   type="time"
+                  id="hora"
                   name="hora"
-                  value={formData.hora}
+                  value={formData.hora} // Asumo que 'hora' se manejará temporalmente aquí
                   onChange={handleChange}
                   required
                 />
               </div>
             </div>
-            {/* --------------------------------------------- */}
 
-            <label>Prioridad</label>
+            <label htmlFor="prioridad">Prioridad</label>
             <select
+              id="prioridad"
               name="prioridad"
               value={formData.prioridad}
               onChange={handleChange}
@@ -160,32 +157,32 @@ export default function CrearTarea() {
               <option value="alta">Alta</option>
             </select>
 
-            <label>Estado</label>
-            <select
-              name="estado"
-              value={formData.estado}
-              onChange={handleChange}
-              required
-            >
-              <option value="pendiente">Pendiente</option>
-              <option value="completada">Completada</option>
-            </select>
+            {/* Checkbox para 'Completada' (estado) */}
+            <div className="terms"> {/* Reutilizando la clase 'terms' para el checkbox */}
+              <input
+                type="checkbox"
+                id="completada"
+                name="completada"
+                checked={formData.completada}
+                onChange={handleChange}
+              />
+              <label htmlFor="completada">Tarea Completada</label>
+            </div>
 
             {error && <p className="error">{error}</p>}
-
             <button type="submit" disabled={loading}>
-              {loading ? "Registrando..." : "Registrar tarea"}
+              {loading ? "Registrando..." : "Registrar Tarea"}
             </button>
           </form>
         </div>
       </main>
 
-      {/* ===== FOOTER IGUAL A INICIO ===== */}
+      {/* ===== FOOTER ===== */}
       <footer className="footer">
-        <Link to="/home">
+        <a href="/home"> {/* Usando <a> si no usas react-router para el footer */}
           <img src="/home.png" alt="home" className="icon" />
           <span>Inicio</span>
-        </Link>
+        </a>
       </footer>
     </div>
   );

@@ -26,7 +26,7 @@ function Registro() {
 
     const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
     if (!passwordRegex.test(contrasena)) {
-      setError("La contraseña debe tener al menos 8 caracteres, 1 mayúscula, 1 número y 1 carácter especial.");
+      setError("La contraseña debe contener al menos 8 caracteres, 1 mayúscula, 1 número y 1 carácter especial.");
       return;
     }
 
@@ -40,27 +40,30 @@ function Registro() {
     try {
       const res = await fetch("http://localhost:3001/api/auth/register", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           nombres,
           apellidos,
-          edad,
+          edad: parseInt(edad, 10), // Asegurarse de que la edad sea un número
           correo,
           contrasena,
         }),
       });
 
-      const data = await res.json();
-
-      if (res.ok) {
-        navigate("/login", {
-          state: { success: "¡Registro exitoso! Por favor, inicia sesión." },
-        });
-      } else {
-        setError(data.message || "Error en el registro. Inténtalo de nuevo.");
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Error en el registro. Inténtalo de nuevo.");
       }
+
+      // Registro exitoso, redirigir a login
+      navigate("/login", {
+        state: { success: "¡Registro exitoso! Por favor, inicia sesión." },
+      });
+
     } catch (err) {
-      setError("Error de conexión. Revisa el servidor.");
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -68,17 +71,13 @@ function Registro() {
 
   return (
     <div className="register-container">
-      {/* Lado izquierdo */}
       <div className="register-left">
         <img src="/logo.png" alt="Checknote Logo" className="main-logo" />
         <p>Organízate más fácil que nunca</p>
       </div>
-
-      {/* Lado derecho */}
       <div className="register-card">
         <h2>Crear cuenta</h2>
         <form className="register-form" onSubmit={handleSubmit}>
-          {/* Nombres */}
           <div className="field-group">
             <img src="/usuario.png" alt="Nombre" className="field-icon" />
             <div className="field-input">
@@ -92,7 +91,6 @@ function Registro() {
               />
             </div>
           </div>
-          {/* Apellidos */}
           <div className="field-group">
             <div className="field-icon empty"></div>
             <div className="field-input">
@@ -106,9 +104,9 @@ function Registro() {
               />
             </div>
           </div>
-          {/* Edad */}
           <div className="field-group">
-            <img src="/edad.png" alt="Edad" className="field-icon" />
+            {/* Asumiendo que tienes un icono para edad */}
+            <img src="/edad.png" alt="Edad" className="field-icon" /> 
             <div className="field-input">
               <label>Edad</label>
               <input
@@ -121,7 +119,6 @@ function Registro() {
               />
             </div>
           </div>
-          {/* Correo */}
           <div className="field-group">
             <img src="/correo.png" alt="Email" className="field-icon" />
             <div className="field-input">
@@ -135,7 +132,6 @@ function Registro() {
               />
             </div>
           </div>
-          {/* Contraseña */}
           <div className="field-group">
             <img src="/clave.png" alt="Contraseña" className="field-icon" />
             <div className="field-input">
@@ -149,7 +145,6 @@ function Registro() {
               />
             </div>
           </div>
-          {/* Confirmar contraseña */}
           <div className="field-group">
             <div className="field-icon empty"></div>
             <div className="field-input">
@@ -163,7 +158,6 @@ function Registro() {
               />
             </div>
           </div>
-          {/* Checkbox */}
           <div className="terms">
             <input
               type="checkbox"
@@ -171,16 +165,12 @@ function Registro() {
               checked={terms}
               onChange={(e) => setTerms(e.target.checked)}
             />
-            <label htmlFor="terms">
-              Estoy de acuerdo con los términos y condiciones
-            </label>
+            <label htmlFor="terms">Estoy de acuerdo con los términos y condiciones</label>
           </div>
           {error && <p className="error">{error}</p>}
-          {/* Botón de registro */}
           <button type="submit" className="btn-register" disabled={loading}>
             {loading ? "Registrando..." : "Registrarse"}
           </button>
-          {/* Google */}
           <div className="google-login">
             <img src="/google.png" alt="Google" />
             <span>Continuar con Google</span>
