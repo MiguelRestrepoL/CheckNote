@@ -417,4 +417,4 @@ class UserController extends GlobalController {
 
 }
 
-module.exports = new UserController();
+module.exports =  UserController;
