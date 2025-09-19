@@ -214,8 +214,4 @@ class UserDAO {
 }
 
 
-<<<<<<< HEAD
-module.exports = new UserDAO();
-=======
 module.exports =  UserDAO;
->>>>>>> origin/Daniel_!

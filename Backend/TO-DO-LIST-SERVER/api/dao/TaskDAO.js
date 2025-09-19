@@ -26,11 +26,8 @@ class TaskDAO {
    */
   static async getTasksByUserId(userId, filters = {}) {
     try {
-<<<<<<< HEAD
-      const query = { userId: new mongoose.Types.ObjectId(userId) };
-=======
       const query = { userId: userId };
->>>>>>> origin/Daniel_!
+
       
       // Aplicar filtros opcionales
       if (filters.completada !== undefined) {
@@ -84,11 +81,7 @@ class TaskDAO {
       
       const task = await Task.findOne({
         _id: taskId,
-<<<<<<< HEAD
-        userId: new mongoose.Types.ObjectId(userId)
-=======
         userId: userId
->>>>>>> origin/Daniel_!
       }).lean();
       
       return task;

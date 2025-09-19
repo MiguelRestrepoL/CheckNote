@@ -148,8 +148,4 @@ class AuthController {
   }
 }
 
-<<<<<<< HEAD
-module.exports = new AuthController();
-=======
 module.exports =  AuthController;
->>>>>>> origin/Daniel_!
