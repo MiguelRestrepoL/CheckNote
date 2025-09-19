@@ -7,7 +7,7 @@ class UserDAO {
    * @param {Object} userData - Datos del usuario
    * @returns {Object} Usuario creado con su ID
    */
-  async createUser(userData) {
+  static async createUser(userData) {
     try {
       const newUser = new User(userData);
       const savedUser = await newUser.save();
@@ -32,7 +32,7 @@ class UserDAO {
    * @param {String} correo - Correo del usuario
    * @returns {Object|null} Usuario encontrado o null
    */
-  async findByEmail(correo) {
+  static async findByEmail(correo) {
     try {
       const user = await User.findOne({ correo: correo.toLowerCase() });
       return user;
@@ -46,7 +46,7 @@ class UserDAO {
    * @param {String} userId - ID del usuario
    * @returns {Object|null} Usuario encontrado o null
    */
-  async findById(userId) {
+  static async findById(userId) {
     try {
       const user = await User.findById(userId);
       return user;
@@ -60,7 +60,7 @@ class UserDAO {
    * @param {String} correo - Correo a verificar
    * @returns {Boolean} true si existe, false si no
    */
-  async emailExists(correo) {
+  static async emailExists(correo) {
     try {
       const user = await User.findOne({ correo: correo.toLowerCase() });
       return !!user; // Convierte a boolean
@@ -214,4 +214,4 @@ class UserDAO {
 }
 
 
-module.exports = new UserDAO();
+module.exports =  UserDAO;

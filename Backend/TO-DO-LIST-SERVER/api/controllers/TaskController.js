@@ -10,7 +10,7 @@ class TaskController {
   async create(req, res) {
     try {
       const { titulo, descripcion, prioridad, fechaVencimiento } = req.body;
-      const userId = req.user.id; // Del middleware authenticateToken
+      const userId = req.user._id; // Del middleware authenticateToken
 
       // Validación de campos requeridos
       if (!titulo || titulo.trim().length === 0) {
@@ -355,4 +355,4 @@ class TaskController {
   }
 }
 
-module.exports = new TaskController();
+module.exports =  TaskController;
