@@ -1,10 +1,49 @@
 const express = require('express');
-const router = express.Router();
 const AuthController = require('../controllers/AuthController');
+const { 
+  loginLimiter, 
+  apiLimiter, 
+  passwordResetLimiter
+} = require('../middleware/rateLimitMiddleware');
 
-const authController = new AuthController(); // ✅ Crear instancia
+const router = express.Router();
+const authController = new AuthController();
 
-router.post('/login', (req, res) => authController.login(req, res));
-router.post('/verify', (req, res) => authController.verifyToken(req, res));
+// LOGIN
+router.post('/login', 
+  loginLimiter,
+  authController.login.bind(authController)
+);
+
+// VERIFICAR TOKEN
+router.post('/verify', 
+  apiLimiter,
+  authController.verifyToken.bind(authController)
+);
+
+// SOLICITAR RECUPERACIÓN DE CONTRASEÑA
+router.post('/request-password-reset', 
+  passwordResetLimiter,
+  authController.requestPasswordReset.bind(authController)
+);
+
+// RESTABLECER CONTRASEÑA
+router.post('/reset-password', 
+  passwordResetLimiter,
+  authController.resetPassword.bind(authController)
+);
+
+// RUTAS DE DESARROLLO
+if (process.env.NODE_ENV === 'development') {
+  router.get('/security-stats', 
+    apiLimiter,
+    authController.getSecurityStats.bind(authController)
+  );
+
+  router.post('/cleanup-security', 
+    apiLimiter,
+    authController.cleanupSecurityData.bind(authController)
+  );
+}
 
 module.exports = router;
