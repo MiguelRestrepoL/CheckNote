@@ -44,4 +44,18 @@ router.delete('/:id',
   taskController.delete.bind(taskController)
 );
 
+// OBTENER TABLERO KANBAN
+router.get('/kanban', 
+  apiLimiter,
+  authenticateToken, 
+  taskController.getKanbanBoard.bind(taskController)
+);
+
+// CAMBIAR ESTADO DE TAREA
+router.patch('/:id/status', 
+  apiLimiter,
+  authenticateToken, 
+  taskController.updateTaskStatus.bind(taskController)
+);
+
 module.exports = router;
