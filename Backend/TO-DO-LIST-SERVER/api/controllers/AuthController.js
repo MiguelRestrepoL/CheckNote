@@ -106,25 +106,70 @@ class AuthController extends GlobalController {
     }
   }
 
-  // 🔒 VERIFICAR TOKEN (sin cambios significativos)
+  // 🔒 VERIFICAR TOKEN CON VALIDACIÓN MEJORADA
   async verifyToken(req, res) {
     try {
       const authHeader = req.headers.authorization;
-      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      
+      // Verificación detallada del header de autorización
+      if (!authHeader) {
+        console.log('❌ Token no proporcionado: Header de autorización faltante');
         return res.status(401).json({
           success: false,
-          message: 'Token no proporcionado'
+          message: 'Token no proporcionado',
+          error: 'TOKEN_MISSING'
+        });
+      }
+
+      if (!authHeader.startsWith('Bearer ')) {
+        console.log('❌ Formato de token inválido: No comienza con "Bearer "');
+        return res.status(401).json({
+          success: false,
+          message: 'Formato de token inválido',
+          error: 'TOKEN_INVALID_FORMAT'
         });
       }
 
       const token = authHeader.substring(7);
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const user = await UserDAO.findById(decoded.userId);
-
-      if (!user) {
+      
+      // Verificar si el token es undefined o está vacío
+      if (!token || token === 'undefined' || token.trim() === '') {
+        console.log('❌ Token inválido: Token vacío o undefined');
         return res.status(401).json({
           success: false,
-          message: 'Usuario no encontrado'
+          message: 'Token inválido o vacío',
+          error: 'TOKEN_INVALID'
+        });
+      }
+
+      // Verificar y decodificar el token
+      let decoded;
+      try {
+        decoded = jwt.verify(token, process.env.JWT_SECRET);
+      } catch (tokenError) {
+        console.log('❌ Error verificando token:', tokenError.name);
+        if (tokenError.name === 'TokenExpiredError') {
+          return res.status(401).json({
+            success: false,
+            message: 'Token expirado',
+            error: 'TOKEN_EXPIRED'
+          });
+        }
+        return res.status(401).json({
+          success: false,
+          message: 'Token inválido',
+          error: 'TOKEN_INVALID'
+        });
+      }
+
+      // Buscar usuario
+      const user = await UserDAO.findById(decoded.userId);
+      if (!user) {
+        console.log('❌ Usuario no encontrado para el token proporcionado');
+        return res.status(401).json({
+          success: false,
+          message: 'Usuario no encontrado',
+          error: 'USER_NOT_FOUND'
         });
       }
 
