@@ -599,7 +599,7 @@ class EmailService {
   // EMAIL DE RECUPERACIÓN DE CONTRASEÑA
   async sendPasswordResetEmail(email, resetToken, userName = null) {
     try {
-      const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
+      const resetUrl = `${process.env.RESET_URL2 || 'https://check-note-fend.vercel.app/olvidar-password2'}?token=${resetToken}`;
       
       const variables = {
         USER_NAME: userName || email.split('@')[0],
