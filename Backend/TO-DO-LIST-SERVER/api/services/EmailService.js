@@ -684,7 +684,7 @@ class EmailService {
         'password-reset',
         {
           USER_NAME: 'Usuario de Prueba',
-          RESET_URL: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/test`,
+          RESET_URL: `${process.env.RESET_URL2 || 'https://check-note-fend.vercel.app/olvidar-password2'}/test`,
           EXPIRES_IN: '1 hora'
         }
       );
