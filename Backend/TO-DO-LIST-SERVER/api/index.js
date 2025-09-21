@@ -162,6 +162,8 @@ app.use(slowRequestDetector(2000));
 const allowedOrigins = [
   'http://localhost:3000',
   'http://127.0.0.1:3000',
+  'http://localhost:5173', // Para Vite
+  'https://check-note-fend.vercel.app', // Tu dominio exacto
   process.env.FRONTEND_URL,
   // Agregar otras URLs de frontend si es necesario
 ].filter(Boolean); // Elimina valores undefined
@@ -169,13 +171,14 @@ const allowedOrigins = [
 app.use(cors({
   origin: [
     'http://localhost:3000', 
-    'http://127.0.0.1:3000', 
-    'https://check-note-fend.vercel.app',
+    'http://127.0.0.1:3000',
+    'http://localhost:5173', // Para Vite
+    'https://check-note-fend.vercel.app', // Tu dominio exacto
     process.env.FRONTEND_URL
-  ].filter(Boolean), // Elimina valores undefined/null
+  ].filter(Boolean),
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
   optionsSuccessStatus: 200
 }));
 
@@ -609,6 +612,20 @@ process.on('unhandledRejection', (reason, promise) => {
   });
   console.error('💥 Promise rechazada no manejada:', reason);
   process.exit(1);
+});
+
+app.get('/api/v1/health', (req, res) => {
+  const healthCheck = {
+    uptime: process.uptime(),
+    message: 'API OK',
+    timestamp: new Date().toISOString(),
+    version: '1.5.0'
+  };
+  
+  res.status(200).json({
+    success: true,
+    data: healthCheck
+  });
 });
 
 // INICIAR LA APLICACIÓN
