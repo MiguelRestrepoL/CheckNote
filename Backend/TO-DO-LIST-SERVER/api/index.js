@@ -167,7 +167,12 @@ const allowedOrigins = [
 ].filter(Boolean); // Elimina valores undefined
 
 app.use(cors({
-  origin: allowedOrigins,
+  origin: [
+    'http://localhost:3000', 
+    'http://127.0.0.1:3000', 
+    'https://check-note-fend.vercel.app',
+    process.env.FRONTEND_URL
+  ].filter(Boolean), // Elimina valores undefined/null
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
