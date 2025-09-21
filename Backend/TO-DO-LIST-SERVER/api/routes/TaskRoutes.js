@@ -1,16 +1,61 @@
+// api/routes/TaskRoutes.js - VERSIÓN MEJORADA FASE 5
 const express = require('express');
-const router = express.Router();
 const TaskController = require('../controllers/TaskController');
 const { authenticateToken } = require('../middleware/authMiddleware');
+const { apiLimiter } = require('../middleware/rateLimitMiddleware');
 
-const taskController = new TaskController(); // ✅ Crear instancia
+const router = express.Router();
+const taskController = new TaskController();
 
-router.post('/', authenticateToken, (req, res) => taskController.create(req, res));
-router.get('/', authenticateToken, (req, res) => taskController.getAll(req, res));
-router.get('/:id', authenticateToken, (req, res) => taskController.getById(req, res));
-router.put('/:id', authenticateToken, (req, res) => taskController.update(req, res));
-router.delete('/:id', authenticateToken, (req, res) => taskController.delete(req, res));
+// 🔒 TODAS LAS RUTAS PROTEGIDAS CON JWT Y RATE LIMITING
 
+// CREAR TAREA
+router.post('/', 
+  apiLimiter,
+  authenticateToken, 
+  taskController.create.bind(taskController)
+);
 
+// OBTENER TODAS MIS TAREAS (con filtros y paginación)
+router.get('/', 
+  apiLimiter,
+  authenticateToken, 
+  taskController.getAll.bind(taskController)
+);
+
+// OBTENER TAREA ESPECÍFICA POR ID
+router.get('/:id', 
+  apiLimiter,
+  authenticateToken, 
+  taskController.getById.bind(taskController)
+);
+
+// ACTUALIZAR TAREA
+router.put('/:id', 
+  apiLimiter,
+  authenticateToken, 
+  taskController.update.bind(taskController)
+);
+
+// ELIMINAR TAREA
+router.delete('/:id', 
+  apiLimiter,
+  authenticateToken, 
+  taskController.delete.bind(taskController)
+);
+
+// OBTENER TABLERO KANBAN
+router.get('/kanban', 
+  apiLimiter,
+  authenticateToken, 
+  taskController.getKanbanBoard.bind(taskController)
+);
+
+// CAMBIAR ESTADO DE TAREA
+router.patch('/:id/status', 
+  apiLimiter,
+  authenticateToken, 
+  taskController.updateTaskStatus.bind(taskController)
+);
 
 module.exports = router;

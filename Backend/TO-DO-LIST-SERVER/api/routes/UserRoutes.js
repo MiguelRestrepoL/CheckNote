@@ -1,20 +1,37 @@
-const express = require("express");
+const express = require('express');
+const UserController = require('../controllers/UserController');
+const { authenticateToken } = require('../middleware/authMiddleware');
+const { 
+  registerLimiter, 
+  apiLimiter 
+} = require('../middleware/rateLimitMiddleware');
+
 const router = express.Router();
-const UserController = require("../controllers/UserController");
-const {authenticateToken} = require('../middleware/authMiddleware'); // ✅ Ruta correcta
+const userController = new UserController();
 
-const userController = new UserController(); // ✅ Una sola instancia
+// REGISTRO DE USUARIO
+router.post('/Registro', 
+  registerLimiter,
+  userController.create.bind(userController)
+);
 
-// RUTAS PÚBLICAS
-router.post("/Registro", (req, res) => userController.create(req, res));
+// RUTAS PROTEGIDAS
+router.get('/me', 
+  apiLimiter,
+  authenticateToken, 
+  userController.getProfile.bind(userController)
+);
 
-// RUTAS PROTEGIDAS - PERFIL
-router.get('/me', authenticateToken, (req, res) => userController.getProfile(req, res));
-router.put('/me', authenticateToken, (req, res) => userController.updateProfile(req, res));
-router.delete('/me', authenticateToken, (req, res) => userController.deleteProfile(req, res));
+router.put('/me', 
+  apiLimiter,
+  authenticateToken, 
+  userController.updateProfile.bind(userController)
+);
 
-// RUTAS PROTEGIDAS - ADMIN
-router.get('/:id', authenticateToken, (req, res) => userController.read(req, res));
-router.get('/', authenticateToken, (req, res) => userController.getAll(req, res));
+router.delete('/me', 
+  apiLimiter,
+  authenticateToken, 
+  userController.deleteProfile.bind(userController)
+);
 
 module.exports = router;
