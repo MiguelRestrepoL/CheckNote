@@ -158,10 +158,18 @@ app.use((req, res, next) => {
 app.use(slowRequestDetector(2000));
 
 // CORS con configuración mejorada - FASE 5
+// Configuración CORS mejorada para múltiples entornos
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  process.env.FRONTEND_URL,
+  // Agregar otras URLs de frontend si es necesario
+].filter(Boolean); // Elimina valores undefined
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || ['http://localhost:3000', 'http://127.0.0.1:3000'],
+  origin: allowedOrigins,
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   optionsSuccessStatus: 200
 }));

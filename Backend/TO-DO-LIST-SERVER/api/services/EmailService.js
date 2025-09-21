@@ -123,8 +123,8 @@ class EmailService {
             box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
           }
           .header { 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-            color: white; 
+            background: linear-gradient(135deg, #40485eff 0%, #40485eff 100%); 
+            color: #49ed72ff; 
             padding: 30px 20px; 
             text-align: center; 
           }
@@ -132,7 +132,6 @@ class EmailService {
             max-width: 120px;
             height: auto;
             margin-bottom: 15px;
-            background: white;
             padding: 10px;
             border-radius: 8px;
           }
@@ -155,7 +154,7 @@ class EmailService {
           }
           .button { 
             display: inline-block; 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            background: linear-gradient(135deg, #40485eff 0%, #40485eff 100%); 
             color: white !important; 
             padding: 16px 32px; 
             text-decoration: none; 
@@ -535,8 +534,9 @@ class EmailService {
         APP_NAME: process.env.APP_NAME || 'Mi Aplicación',
         FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:3000',
         CURRENT_YEAR: new Date().getFullYear(),
-        SUPPORT_EMAIL: process.env.SUPPORT_EMAIL || 'soporte@miapp.com'
-      };
+        SUPPORT_EMAIL: process.env.SUPPORT_EMAIL || 'soporte@miapp.com',
+        LOGO_URL: process.env.LOGO_URL || 'https://res.cloudinary.com/<tu_cloud_name>/image/upload/logo.png'
+};
 
       const allVariables = { ...defaultVariables, ...variables };
       const htmlContent = this.replaceVariables(template, allVariables);
