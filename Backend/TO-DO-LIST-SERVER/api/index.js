@@ -163,7 +163,7 @@ app.use(slowRequestDetector(2000));
 
 // Configuración CORS mejorada para múltiples entornos
 const allowedOrigins = [
-  'http://localhost:3000',
+  'http://localhost:8080',
   'http://127.0.0.1:3000',
   'https://check-note-fend.vercel.app',
   // Agregar todas las posibles URLs de Vercel de tu frontend

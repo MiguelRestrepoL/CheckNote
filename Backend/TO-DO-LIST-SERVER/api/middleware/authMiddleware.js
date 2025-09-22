@@ -11,14 +11,26 @@ const authenticateToken = async (req, res, next) => {
   try {
     // Obtener token del header Authorization
     const authHeader = req.headers['authorization'];
+    console.log('Header de autorización:', authHeader);
+    
     const token = authHeader && authHeader.startsWith('Bearer ') 
       ? authHeader.slice(7) 
       : null;
+    
+    console.log('Token extraído:', token ? token.substring(0, 20) + '...' : 'null');
 
     if (!token) {
       return res.status(401).json({
         success: false,
         message: 'Token de acceso requerido'
+      });
+    }
+
+    if (!process.env.JWT_SECRET) {
+      console.error('JWT_SECRET no está configurado');
+      return res.status(500).json({
+        success: false,
+        message: 'Error de configuración del servidor'
       });
     }
 
