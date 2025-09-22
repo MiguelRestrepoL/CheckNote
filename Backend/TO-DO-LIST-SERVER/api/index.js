@@ -157,27 +157,97 @@ app.use((req, res, next) => {
 // Detector de requests lentos (>2 segundos)
 app.use(slowRequestDetector(2000));
 
-// CORS con configuración mejorada - FASE 5
+// ========================================
+// CONFIGURACIÓN CORS MEJORADA PARA VERCEL
+// ========================================
+
 // Configuración CORS mejorada para múltiples entornos
 const allowedOrigins = [
   'http://localhost:3000',
   'http://127.0.0.1:3000',
+  'https://check-note-fend.vercel.app',
+  // Agregar todas las posibles URLs de Vercel de tu frontend
+  'check-note-fend-7etgom6lz-miguels-projects-40b497cf.vercel.app ', // Reemplaza 'tu-usuario' con tu username de GitHub
+  'check-note-fend-git-main-miguels-projects-40b497cf.vercel.app ', // Reemplaza 'tu-usuario' con tu username de GitHub
+  // También incluir cualquier subdomain de preview que Vercel genere
+  /^https:\/\/check-note-fend-[a-zA-Z0-9-]+\.vercel\.app$/,
   process.env.FRONTEND_URL,
-  // Agregar otras URLs de frontend si es necesario
-].filter(Boolean); // Elimina valores undefined
+].filter(Boolean); // Elimina valores undefined/null
 
-app.use(cors({
-  origin: [
-    'http://localhost:3000', 
-    'http://127.0.0.1:3000', 
-    'https://check-note-fend.vercel.app',
-    process.env.FRONTEND_URL
-  ].filter(Boolean), // Elimina valores undefined/null
+console.log('🌐 Allowed CORS origins:', allowedOrigins);
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Permitir requests sin origin (como aplicaciones móviles o Postman)
+    if (!origin) {
+      console.log('⚠️ Request without origin allowed (mobile app or API testing)');
+      return callback(null, true);
+    }
+    
+    // Verificar si el origin está en la lista de permitidos
+    const isAllowed = allowedOrigins.some(allowedOrigin => {
+      if (typeof allowedOrigin === 'string') {
+        return allowedOrigin === origin;
+      }
+      if (allowedOrigin instanceof RegExp) {
+        return allowedOrigin.test(origin);
+      }
+      return false;
+    });
+    
+    if (isAllowed) {
+      console.log('✅ CORS allowed for origin:', origin);
+      callback(null, true);
+    } else {
+      console.log('❌ CORS blocked for origin:', origin);
+      console.log('📋 Allowed origins:', allowedOrigins.map(o => o.toString()));
+      callback(new Error(`Origin ${origin} not allowed by CORS policy`), false);
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  optionsSuccessStatus: 200
-}));
+  allowedHeaders: [
+    'Content-Type', 
+    'Authorization', 
+    'X-Requested-With',
+    'Accept',
+    'Origin',
+    'X-CSRF-Token',
+    'X-Api-Version',
+    'Cache-Control'
+  ],
+  exposedHeaders: ['X-Total-Count', 'X-Request-ID'], // Si necesitas exponer headers personalizados
+  optionsSuccessStatus: 200,
+  maxAge: 86400 // Cache preflight por 24 horas
+};
+
+app.use(cors(corsOptions));
+
+// ========================================
+// MIDDLEWARE ADICIONAL PARA DEBUGGING CORS
+// ========================================
+app.use((req, res, next) => {
+  // Log detallado para requests de frontend
+  const origin = req.headers.origin;
+  const method = req.method;
+  const path = req.path;
+  
+  // Log especial para requests de Vercel
+  if (origin && (origin.includes('vercel.app') || origin.includes('localhost'))) {
+    console.log(`🔍 Frontend request: ${method} ${path} from ${origin}`);
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.log('📋 Request headers:', {
+        'content-type': req.headers['content-type'],
+        'authorization': req.headers.authorization ? '***PROVIDED***' : 'NONE',
+        'user-agent': req.headers['user-agent']?.substring(0, 50) + '...',
+        'referer': req.headers.referer
+      });
+    }
+  }
+  
+  next();
+});
 
 // Parseo de JSON con límites de seguridad mejorados - FASE 5
 app.use(express.json({ 
@@ -210,6 +280,33 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(requestBodyLogger);
 
 // ========================================
+// ENDPOINT PARA PROBAR CORS
+// ========================================
+app.get('/cors-test', (req, res) => {
+  const corsHeaders = {
+    'access-control-allow-origin': res.getHeader('access-control-allow-origin'),
+    'access-control-allow-credentials': res.getHeader('access-control-allow-credentials'),
+    'access-control-allow-methods': res.getHeader('access-control-allow-methods'),
+    'access-control-allow-headers': res.getHeader('access-control-allow-headers')
+  };
+  
+  console.log('🧪 CORS test endpoint accessed from:', req.headers.origin);
+  
+  res.json({
+    success: true,
+    message: 'CORS working correctly! 🎉',
+    data: {
+      origin: req.headers.origin,
+      method: req.method,
+      timestamp: new Date().toISOString(),
+      corsHeaders: corsHeaders,
+      userAgent: req.headers['user-agent']?.substring(0, 100) + '...',
+      requestId: req.requestId
+    }
+  });
+});
+
+// ========================================
 // RUTA DE HEALTH CHECK MEJORADA
 // ========================================
 app.get('/health', (req, res) => {
@@ -235,13 +332,18 @@ app.get('/health', (req, res) => {
         provider: emailStats.provider || 'resend',
         templatesLoaded: emailStats.templatesLoaded || 0
       }
+    },
+    cors: {
+      allowedOrigins: allowedOrigins.length,
+      requestOrigin: req.headers.origin || 'none'
     }
   };
   
   logger.info('Health check requested', { 
     uptime: healthCheck.uptime,
     requestId: req.requestId,
-    emailService: healthCheck.security.emailService
+    emailService: healthCheck.security.emailService,
+    origin: req.headers.origin
   });
   
   res.status(200).json({
@@ -270,7 +372,8 @@ app.get('/', (req, res) => {
       logging: '✅ Avanzado',
       security: '✅ Headers + Rate Limiting + Password Reset',
       email: emailConfigured ? '✅ Configurado (Resend)' : 
-             emailSimulation ? '⚠️ Simulación (Desarrollo)' : '❌ No configurado'
+             emailSimulation ? '⚠️ Simulación (Desarrollo)' : '❌ No configurado',
+      cors: '✅ Configurado para Vercel'
     },
     security: {
       rateLimiting: {
@@ -280,11 +383,17 @@ app.get('/', (req, res) => {
         passwordReset: '3 attempts/hour'
       },
       accountBlocking: '5 failed attempts → 30min lock',
-      passwordReset: 'Secure tokens + Email notifications'
+      passwordReset: 'Secure tokens + Email notifications',
+      cors: {
+        allowedOrigins: allowedOrigins.length,
+        credentials: true,
+        methods: 'GET,POST,PUT,DELETE,OPTIONS,PATCH'
+      }
     },
     endpoints: {
       health: '/health',
       docs: '/api-docs',
+      corsTest: '/cors-test',
       auth: {
         login: 'POST /api/v1/auth/login',
         verify: 'POST /api/v1/auth/verify',
@@ -320,6 +429,10 @@ if (process.env.NODE_ENV === 'development') {
           emailService: {
             configured: EmailService.isConfigured,
             stats: emailStats
+          },
+          cors: {
+            allowedOrigins: allowedOrigins,
+            totalOrigins: allowedOrigins.length
           },
           timestamp: new Date().toISOString(),
           requestId: req.requestId
@@ -442,6 +555,24 @@ app.use((error, req, res, next) => {
     });
   }
   
+  // CORS errors
+  if (error.message && error.message.includes('CORS')) {
+    logger.error('CORS error', {
+      ip: req.ip,
+      origin: req.headers.origin,
+      requestId: req.requestId,
+      error: error.message
+    });
+    
+    return res.status(403).json({
+      success: false,
+      message: 'CORS error: Origen no permitido',
+      code: 'CORS_ERROR',
+      origin: req.headers.origin,
+      requestId: req.requestId
+    });
+  }
+  
   next(error);
 });
 
@@ -504,23 +635,29 @@ async function startServer() {
         port: PORT,
         environment: process.env.NODE_ENV || 'development',
         version: '1.5.0',
-        features: 'Auth + Users + Tasks + Error Handling + Logging + Advanced Security + Email',
+        features: 'Auth + Users + Tasks + Error Handling + Logging + Advanced Security + Email + Enhanced CORS',
         timestamp: new Date().toISOString(),
         security: {
           rateLimiting: 'enabled',
           accountBlocking: 'enabled',
           passwordReset: 'enabled',
-          emailService: emailStatus
+          emailService: emailStatus,
+          cors: `${allowedOrigins.length} origins allowed`
         }
       };
       
       console.log(`🌐 Servidor disponible en: http://localhost:${PORT}`);
       console.log(`📖 Documentación Swagger: http://localhost:${PORT}/api-docs`);
       console.log(`📋 Health Check: http://localhost:${PORT}/health`);
+      console.log(`🧪 CORS Test: http://localhost:${PORT}/cors-test`);
       console.log(`🔒 Security Status: http://localhost:${PORT}/security-status`);
       if (process.env.NODE_ENV === 'development') {
         console.log(`📧 Test Email: POST http://localhost:${PORT}/test-email`);
       }
+      console.log('🌐 CORS configurado para:');
+      allowedOrigins.forEach((origin, index) => {
+        console.log(`   ${index + 1}. ${origin}`);
+      });
       console.log('📋 Funcionalidades:');
       console.log('   ✅ Autenticación JWT + Bloqueo de cuentas');
       console.log('   ✅ CRUD Usuarios + Perfil completo');
@@ -530,6 +667,7 @@ async function startServer() {
       console.log('   ✅ Rate Limiting inteligente');
       console.log('   ✅ Recuperación de contraseñas');
       console.log(`   ${EmailService.isConfigured === true ? '✅' : EmailService.isConfigured === 'simulation' ? '⚠️' : '❌'} Servicio de email: ${emailStatus}`);
+      console.log('   ✅ CORS mejorado para Vercel');
       
       logger.info(startMessage, details);
       
