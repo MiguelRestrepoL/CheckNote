@@ -106,36 +106,19 @@ async function initializeServices() {
 // ========================================
 
 // 1. CORS MANUAL - DEBE SER LO PRIMERO
-app.use((req, res, next) => {
-  const origin = req.get('Origin');
-  const allowedOrigins = [
-    'https://check-note-fend.vercel.app',
+app.use(cors({
+  origin: [
     'http://localhost:3000',
+    'http://127.0.0.1:3000',
     'http://localhost:5173',
-    'http://127.0.0.1:3000'
-  ];
-  
-  console.log('🔍 CORS Manual - Origin recibido:', origin);
-  console.log('🔍 CORS Manual - Method:', req.method);
-  console.log('🔍 CORS Manual - Path:', req.path);
-  
-  if (allowedOrigins.includes(origin) || !origin) {
-    console.log('✅ CORS Manual - Permitiendo origin:', origin || 'no-origin');
-    res.header('Access-Control-Allow-Origin', origin || '*');
-    res.header('Access-Control-Allow-Credentials', 'true');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
-  } else {
-    console.log('❌ CORS Manual - Bloqueando origin:', origin);
-  }
-  
-  if (req.method === 'OPTIONS') {
-    console.log('🔄 CORS Manual - Respondiendo a preflight OPTIONS');
-    return res.sendStatus(200);
-  }
-  
-  next();
-});
+    'https://check-note-fend.vercel.app',
+    'https://check-note-git-development-miguels-projects-40b497cf.vercel.app',
+    process.env.FRONTEND_URL
+  ].filter(Boolean),
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
+}));
 
 // 2. Parseo de JSON - TEMPRANO para que esté disponible
 app.use(express.json({ 
