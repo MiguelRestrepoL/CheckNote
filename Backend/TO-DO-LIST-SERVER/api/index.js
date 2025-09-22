@@ -249,6 +249,54 @@ app.use((req, res, next) => {
 // 8. Rate limiting
 app.use('/api', apiLimiter);
 
+
+// ========================================
+// CONFIGURACIÓN CORS MEJORADA PARA VERCEL
+// ========================================
+
+// Configuración CORS mejorada para múltiples entornos
+const allowedOrigins = [
+  'http://localhost:8080',
+  'http://127.0.0.1:3000',
+  'https://check-note-fend.vercel.app',
+  // Agregar todas las posibles URLs de Vercel de tu frontend
+  'check-note-fend-7etgom6lz-miguels-projects-40b497cf.vercel.app ', // Reemplaza 'tu-usuario' con tu username de GitHub
+  'check-note-fend-git-main-miguels-projects-40b497cf.vercel.app ', // Reemplaza 'tu-usuario' con tu username de GitHub
+  // También incluir cualquier subdomain de preview que Vercel genere
+  /^https:\/\/check-note-fend-[a-zA-Z0-9-]+\.vercel\.app$/,
+  process.env.FRONTEND_URL,
+].filter(Boolean); // Elimina valores undefined/null
+
+console.log('🌐 Allowed CORS origins:', allowedOrigins);
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Permitir requests sin origin (como aplicaciones móviles o Postman)
+    if (!origin) {
+      console.log('⚠️ Request without origin allowed (mobile app or API testing)');
+      return callback(null, true);
+    }
+    
+    // Verificar si el origin está en la lista de permitidos
+    const isAllowed = allowedOrigins.some(allowedOrigin => {
+      if (typeof allowedOrigin === 'string') {
+        return allowedOrigin === origin;
+      }
+      if (allowedOrigin instanceof RegExp) {
+        return allowedOrigin.test(origin);
+      }
+      return false;
+    });
+    
+    if (isAllowed) {
+      console.log('✅ CORS allowed for origin:', origin);
+      callback(null, true);
+    } else {
+      console.log('❌ CORS blocked for origin:', origin);
+      console.log('📋 Allowed origins:', allowedOrigins.map(o => o.toString()));
+      callback(new Error(`Origin ${origin} not allowed by CORS policy`), false);
+
+
 // 9. Detector de requests lentos
 app.use(slowRequestDetector(2000));
 

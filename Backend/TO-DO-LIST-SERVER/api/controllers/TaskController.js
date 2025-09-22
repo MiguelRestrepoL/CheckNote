@@ -94,14 +94,22 @@ class TaskController {
   }
 
   /**
-   * Obtener todas las tareas del usuario (actualizado con filtro por estado)
+   * Obtener todas las tareas del usuario (CORREGIDO: req.user._id en lugar de req.user.id)
    * @param {Request} req - Request con query params opcionales
    * @param {Response} res - Response de Express
    */
   async getAll(req, res) {
     try {
-      const userId = req.user.id;
+      const userId = req.user._id; // CORREGIDO: Cambiar de req.user.id a req.user._id
       const { completada, prioridad, estado, limite } = req.query;
+
+      // Validar que el userId existe
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          message: 'Usuario no autenticado correctamente'
+        });
+      }
 
       // Construir filtros
       const filters = {};
@@ -161,14 +169,21 @@ class TaskController {
   }
 
   /**
-   * NUEVO: Obtener tablero Kanban completo
+   * NUEVO: Obtener tablero Kanban completo (CORREGIDO)
    * @param {Request} req - Request de Express
    * @param {Response} res - Response de Express
    */
   async getKanbanBoard(req, res) {
     try {
-      const userId = req.user.id;
+      const userId = req.user._id; // CORREGIDO: Cambiar de req.user.id a req.user._id
       
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          message: 'Usuario no autenticado correctamente'
+        });
+      }
+
       const board = await TaskDAO.getTasksByBoard(userId);
       const stats = await TaskDAO.getBoardStats(userId);
 
@@ -200,7 +215,7 @@ class TaskController {
   }
 
   /**
-   * NUEVO: Cambiar estado de tarea (para arrastrar y soltar)
+   * NUEVO: Cambiar estado de tarea (CORREGIDO)
    * @param {Request} req - Request con params.id y body.estado
    * @param {Response} res - Response de Express
    */
@@ -208,7 +223,14 @@ class TaskController {
     try {
       const { id } = req.params;
       const { estado } = req.body;
-      const userId = req.user.id;
+      const userId = req.user._id; // CORREGIDO: Cambiar de req.user.id a req.user._id
+
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          message: 'Usuario no autenticado correctamente'
+        });
+      }
 
       // Validar estado
       if (!estado || !['pendiente', 'en_progreso', 'terminada'].includes(estado)) {
@@ -243,14 +265,21 @@ class TaskController {
   }
 
   /**
-   * NUEVO: Actualizar múltiples tareas a un estado
+   * NUEVO: Actualizar múltiples tareas a un estado (CORREGIDO)
    * @param {Request} req - Request con body.taskIds y body.estado
    * @param {Response} res - Response de Express
    */
   async bulkUpdateStatus(req, res) {
     try {
       const { taskIds, estado } = req.body;
-      const userId = req.user.id;
+      const userId = req.user._id; // CORREGIDO: Cambiar de req.user.id a req.user._id
+
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          message: 'Usuario no autenticado correctamente'
+        });
+      }
 
       if (!taskIds || !Array.isArray(taskIds) || taskIds.length === 0) {
         return res.status(400).json({
@@ -284,12 +313,19 @@ class TaskController {
   }
 
   /**
-   * Obtener tarea por ID (sin cambios)
+   * Obtener tarea por ID (CORREGIDO)
    */
   async getById(req, res) {
     try {
       const { id } = req.params;
-      const userId = req.user.id;
+      const userId = req.user._id; // CORREGIDO: Cambiar de req.user.id a req.user._id
+
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          message: 'Usuario no autenticado correctamente'
+        });
+      }
 
       const task = await TaskDAO.getTaskByIdAndUser(id, userId);
 
@@ -316,13 +352,20 @@ class TaskController {
   }
 
   /**
-   * Actualizar tarea (modificado para manejar estados)
+   * Actualizar tarea (CORREGIDO)
    */
   async update(req, res) {
     try {
       const { id } = req.params;
-      const userId = req.user.id;
+      const userId = req.user._id; // CORREGIDO: Cambiar de req.user.id a req.user._id
       const { titulo, descripcion, completada, estado, prioridad, fechaVencimiento } = req.body;
+
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          message: 'Usuario no autenticado correctamente'
+        });
+      }
 
       const existingTask = await TaskDAO.getTaskByIdAndUser(id, userId);
       
@@ -418,12 +461,19 @@ class TaskController {
   }
 
   /**
-   * Eliminar tarea (sin cambios)
+   * Eliminar tarea (CORREGIDO)
    */
   async delete(req, res) {
     try {
       const { id } = req.params;
-      const userId = req.user.id;
+      const userId = req.user._id; // CORREGIDO: Cambiar de req.user.id a req.user._id
+
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          message: 'Usuario no autenticado correctamente'
+        });
+      }
 
       const deletedTask = await TaskDAO.deleteTask(id, userId);
 
@@ -453,12 +503,19 @@ class TaskController {
   }
 
   /**
-   * Cambiar estado de completado (actualizado para Kanban)
+   * Cambiar estado de completado (CORREGIDO)
    */
   async toggleStatus(req, res) {
     try {
       const { id } = req.params;
-      const userId = req.user.id;
+      const userId = req.user._id; // CORREGIDO: Cambiar de req.user.id a req.user._id
+
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          message: 'Usuario no autenticado correctamente'
+        });
+      }
 
       const currentTask = await TaskDAO.getTaskByIdAndUser(id, userId);
       
