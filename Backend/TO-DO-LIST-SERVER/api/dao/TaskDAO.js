@@ -27,6 +27,7 @@ class TaskDAO {
   static async getTasksByUserId(userId, filters = {}) {
     try {
       const query = { userId: userId };
+
       
       // NUEVO: Filtro por estado Kanban
       if (filters.estado) {
