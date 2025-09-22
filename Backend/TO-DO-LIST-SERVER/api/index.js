@@ -102,10 +102,10 @@ async function initializeServices() {
 }
 
 // ========================================
-// MIDDLEWARES DE SEGURIDAD Y LOGGING
+// MIDDLEWARES EN ORDEN CORRECTO
 // ========================================
 
-// TEMPORAL: Forzar headers CORS manualmente (ANTES de otros middlewares)
+// 1. CORS MANUAL - DEBE SER LO PRIMERO
 app.use((req, res, next) => {
   const origin = req.get('Origin');
   const allowedOrigins = [
@@ -137,7 +137,37 @@ app.use((req, res, next) => {
   next();
 });
 
-// Headers de seguridad (tu implementación existente + mejoras FASE 5)
+// 2. Parseo de JSON - TEMPRANO para que esté disponible
+app.use(express.json({ 
+  limit: '10mb',
+  verify: (req, res, buf) => {
+    try {
+      JSON.parse(buf);
+    } catch (e) {
+      logger.error('Invalid JSON received', {
+        ip: req.ip,
+        userAgent: req.get('User-Agent'),
+        requestId: req.requestId,
+        error: e.message
+      });
+      
+      res.status(400).json({
+        success: false,
+        message: 'JSON inválido en el cuerpo de la petición',
+        code: 'INVALID_JSON',
+        requestId: req.requestId
+      });
+      throw new Error('Invalid JSON');
+    }
+  }
+}));
+
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// 3. Request ID único
+app.use(requestId);
+
+// 4. Headers de seguridad
 app.use((req, res, next) => {
   // Headers de seguridad existentes
   securityHeaders(req, res, () => {});
@@ -153,19 +183,13 @@ app.use((req, res, next) => {
   next();
 });
 
-// Request ID único
-app.use(requestId);
-
-// Tiempo de respuesta
+// 5. Tiempo de respuesta
 app.use(responseTime);
 
-// Rate limiting global para todas las rutas de API - FASE 5
-app.use('/api', apiLimiter);
-
-// Logging de requests
+// 6. Logging de requests
 app.use(requestLogger);
 
-// FASE 5: Logging avanzado de eventos de seguridad
+// 7. FASE 5: Logging avanzado de eventos de seguridad
 app.use((req, res, next) => {
   const timestamp = new Date().toISOString();
   const ip = req.ip || req.connection.remoteAddress;
@@ -186,10 +210,13 @@ app.use((req, res, next) => {
   next();
 });
 
-// Detector de requests lentos (>2 segundos)
+// 8. Rate limiting - DESPUÉS del CORS
+app.use('/api', apiLimiter);
+
+// 9. Detector de requests lentos
 app.use(slowRequestDetector(2000));
 
-// CORS con configuración mejorada - FASE 5
+// 10. CORS con librería (como backup)
 app.use(cors({
   origin: function (origin, callback) {
     const allowedOrigins = [
@@ -223,34 +250,7 @@ app.use(cors({
   optionsSuccessStatus: 200
 }));
 
-// Parseo de JSON con límites de seguridad mejorados - FASE 5
-app.use(express.json({ 
-  limit: '10mb',
-  verify: (req, res, buf) => {
-    try {
-      JSON.parse(buf);
-    } catch (e) {
-      logger.error('Invalid JSON received', {
-        ip: req.ip,
-        userAgent: req.get('User-Agent'),
-        requestId: req.requestId,
-        error: e.message
-      });
-      
-      res.status(400).json({
-        success: false,
-        message: 'JSON inválido en el cuerpo de la petición',
-        code: 'INVALID_JSON',
-        requestId: req.requestId
-      });
-      throw new Error('Invalid JSON');
-    }
-  }
-}));
-
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// Logging del body de requests (solo desarrollo)
+// 11. Logging del body de requests (solo desarrollo)
 app.use(requestBodyLogger);
 
 // ========================================
@@ -294,7 +294,7 @@ app.get('/health', (req, res) => {
   });
 });
 
-// AGREGAR: Health check para API v1 (ANTES de startServer)
+// AGREGAR: Health check para API v1
 app.get('/api/v1/health', (req, res) => {
   console.log('📋 Health check API v1 solicitado');
   
@@ -303,7 +303,7 @@ app.get('/api/v1/health', (req, res) => {
     message: 'API OK',
     timestamp: new Date().toISOString(),
     version: '1.5.0',
-    cors: 'enabled',
+    cors: 'enabled-fixed-order',
     api: 'operational'
   };
   
@@ -593,7 +593,7 @@ async function startServer() {
       console.log('   ✅ Logging avanzado');
       console.log('   ✅ Rate Limiting inteligente');
       console.log('   ✅ Recuperación de contraseñas');
-      console.log('   ✅ CORS manual + library configurado');
+      console.log('   ✅ CORS manual + library en orden correcto');
       console.log(`   ${EmailService.isConfigured === true ? '✅' : EmailService.isConfigured === 'simulation' ? '⚠️' : '❌'} Servicio de email: ${emailStatus}`);
       
       logger.info(startMessage, details);
