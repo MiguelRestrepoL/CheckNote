@@ -3,14 +3,47 @@ const TaskDAO = require('../dao/TaskDAO');
 class TaskController {
 
   /**
+   * Validar usuario autenticado - método helper
+   */
+  _validateUser(req, res) {
+    if (!req.user) {
+      return { 
+        error: true, 
+        response: res.status(401).json({
+          success: false,
+          message: 'Usuario no autenticado'
+        })
+      };
+    }
+
+    if (!req.user._id) {
+      return { 
+        error: true, 
+        response: res.status(401).json({
+          success: false,
+          message: 'Datos de usuario inválidos'
+        })
+      };
+    }
+
+    return { error: false, userId: req.user._id };
+  }
+
+  /**
    * Crear nueva tarea (modificado para incluir estado)
    * @param {Request} req - Request de Express (con req.user del middleware)
    * @param {Response} res - Response de Express
    */
   async create(req, res) {
     try {
+      // Validar usuario primero
+      const userValidation = this._validateUser(req, res);
+      if (userValidation.error) {
+        return userValidation.response;
+      }
+      
       const { titulo, descripcion, prioridad, fechaVencimiento, estado } = req.body;
-      const userId = req.user._id;
+      const userId = userValidation.userId;
 
       // Validación de campos requeridos
       if (!titulo || titulo.trim().length === 0) {
@@ -60,14 +93,14 @@ class TaskController {
         titulo: titulo.trim(),
         descripcion: descripcion?.trim() || '',
         prioridad: prioridad || 'media',
-        estado: estado || 'pendiente', // NUEVO: Por defecto pendiente
+        estado: estado || 'pendiente',
         fechaVencimiento: fechaVencimiento ? new Date(fechaVencimiento) : undefined,
         userId
       };
 
       const newTask = await TaskDAO.createTask(taskData);
 
-      res.status(201).json({
+      return res.status(201).json({
         success: true,
         message: 'Tarea creada exitosamente',
         id: newTask._id,
@@ -86,7 +119,7 @@ class TaskController {
         });
       }
 
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         message: 'Intenta de nuevo más tarde'
       });
@@ -100,16 +133,14 @@ class TaskController {
    */
   async getAll(req, res) {
     try {
-      const userId = req.user._id; // CORREGIDO: Cambiar de req.user.id a req.user._id
-      const { completada, prioridad, estado, limite } = req.query;
-
-      // Validar que el userId existe
-      if (!userId) {
-        return res.status(401).json({
-          success: false,
-          message: 'Usuario no autenticado correctamente'
-        });
+      // Validar usuario primero
+      const userValidation = this._validateUser(req, res);
+      if (userValidation.error) {
+        return userValidation.response;
       }
+      
+      const userId = userValidation.userId;
+      const { completada, prioridad, estado, limite } = req.query;
 
       // Construir filtros
       const filters = {};
@@ -137,7 +168,7 @@ class TaskController {
       // NUEVO: Obtener estadísticas expandidas
       const stats = await TaskDAO.getTaskStats(userId);
 
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         message: `${tasks.length} tarea(s) encontrada(s)`,
         tasks,
@@ -161,9 +192,9 @@ class TaskController {
 
     } catch (error) {
       console.error('Error al obtener tareas:', error);
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
-        message: 'Intenta de nuevo más tarde'
+        message: 'Error interno del servidor'
       });
     }
   }
@@ -175,19 +206,18 @@ class TaskController {
    */
   async getKanbanBoard(req, res) {
     try {
-      const userId = req.user._id; // CORREGIDO: Cambiar de req.user.id a req.user._id
-      
-      if (!userId) {
-        return res.status(401).json({
-          success: false,
-          message: 'Usuario no autenticado correctamente'
-        });
+      // Validar usuario primero
+      const userValidation = this._validateUser(req, res);
+      if (userValidation.error) {
+        return userValidation.response;
       }
+      
+      const userId = userValidation.userId;
 
       const board = await TaskDAO.getTasksByBoard(userId);
       const stats = await TaskDAO.getBoardStats(userId);
 
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         message: 'Tablero Kanban obtenido exitosamente',
         data: {
@@ -207,7 +237,7 @@ class TaskController {
 
     } catch (error) {
       console.error('Error obteniendo tablero Kanban:', error);
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         message: 'Error interno del servidor'
       });
@@ -221,16 +251,15 @@ class TaskController {
    */
   async updateTaskStatus(req, res) {
     try {
+      // Validar usuario primero
+      const userValidation = this._validateUser(req, res);
+      if (userValidation.error) {
+        return userValidation.response;
+      }
+      
       const { id } = req.params;
       const { estado } = req.body;
-      const userId = req.user._id; // CORREGIDO: Cambiar de req.user.id a req.user._id
-
-      if (!userId) {
-        return res.status(401).json({
-          success: false,
-          message: 'Usuario no autenticado correctamente'
-        });
-      }
+      const userId = userValidation.userId;
 
       // Validar estado
       if (!estado || !['pendiente', 'en_progreso', 'terminada'].includes(estado)) {
@@ -249,7 +278,7 @@ class TaskController {
         });
       }
 
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         message: `Tarea movida a ${estado.replace('_', ' ')}`,
         task: updatedTask.toJSON()
@@ -257,7 +286,7 @@ class TaskController {
 
     } catch (error) {
       console.error('Error actualizando estado de tarea:', error);
-      res.status(400).json({
+      return res.status(400).json({
         success: false,
         message: error.message || 'Error actualizando estado'
       });
@@ -271,15 +300,14 @@ class TaskController {
    */
   async bulkUpdateStatus(req, res) {
     try {
-      const { taskIds, estado } = req.body;
-      const userId = req.user._id; // CORREGIDO: Cambiar de req.user.id a req.user._id
-
-      if (!userId) {
-        return res.status(401).json({
-          success: false,
-          message: 'Usuario no autenticado correctamente'
-        });
+      // Validar usuario primero
+      const userValidation = this._validateUser(req, res);
+      if (userValidation.error) {
+        return userValidation.response;
       }
+      
+      const { taskIds, estado } = req.body;
+      const userId = userValidation.userId;
 
       if (!taskIds || !Array.isArray(taskIds) || taskIds.length === 0) {
         return res.status(400).json({
@@ -297,7 +325,7 @@ class TaskController {
 
       const updatedCount = await TaskDAO.bulkUpdateStatus(taskIds, userId, estado);
 
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         message: `${updatedCount} tarea(s) actualizada(s) a ${estado.replace('_', ' ')}`,
         updatedCount
@@ -305,7 +333,7 @@ class TaskController {
 
     } catch (error) {
       console.error('Error en actualización masiva:', error);
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         message: 'Error interno del servidor'
       });
@@ -317,15 +345,14 @@ class TaskController {
    */
   async getById(req, res) {
     try {
-      const { id } = req.params;
-      const userId = req.user._id; // CORREGIDO: Cambiar de req.user.id a req.user._id
-
-      if (!userId) {
-        return res.status(401).json({
-          success: false,
-          message: 'Usuario no autenticado correctamente'
-        });
+      // Validar usuario primero
+      const userValidation = this._validateUser(req, res);
+      if (userValidation.error) {
+        return userValidation.response;
       }
+      
+      const { id } = req.params;
+      const userId = userValidation.userId;
 
       const task = await TaskDAO.getTaskByIdAndUser(id, userId);
 
@@ -336,7 +363,7 @@ class TaskController {
         });
       }
 
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         message: 'Tarea encontrada',
         task
@@ -344,7 +371,7 @@ class TaskController {
 
     } catch (error) {
       console.error('Error al obtener tarea:', error);
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         message: 'Intenta de nuevo más tarde'
       });
@@ -356,16 +383,15 @@ class TaskController {
    */
   async update(req, res) {
     try {
-      const { id } = req.params;
-      const userId = req.user._id; // CORREGIDO: Cambiar de req.user.id a req.user._id
-      const { titulo, descripcion, completada, estado, prioridad, fechaVencimiento } = req.body;
-
-      if (!userId) {
-        return res.status(401).json({
-          success: false,
-          message: 'Usuario no autenticado correctamente'
-        });
+      // Validar usuario primero
+      const userValidation = this._validateUser(req, res);
+      if (userValidation.error) {
+        return userValidation.response;
       }
+      
+      const { id } = req.params;
+      const userId = userValidation.userId;
+      const { titulo, descripcion, completada, estado, prioridad, fechaVencimiento } = req.body;
 
       const existingTask = await TaskDAO.getTaskByIdAndUser(id, userId);
       
@@ -435,7 +461,7 @@ class TaskController {
 
       const updatedTask = await TaskDAO.updateTask(id, userId, updateData);
 
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         message: 'Tarea actualizada exitosamente',
         task: updatedTask.toJSON()
@@ -453,7 +479,7 @@ class TaskController {
         });
       }
 
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         message: 'Intenta de nuevo más tarde'
       });
@@ -465,15 +491,14 @@ class TaskController {
    */
   async delete(req, res) {
     try {
-      const { id } = req.params;
-      const userId = req.user._id; // CORREGIDO: Cambiar de req.user.id a req.user._id
-
-      if (!userId) {
-        return res.status(401).json({
-          success: false,
-          message: 'Usuario no autenticado correctamente'
-        });
+      // Validar usuario primero
+      const userValidation = this._validateUser(req, res);
+      if (userValidation.error) {
+        return userValidation.response;
       }
+      
+      const { id } = req.params;
+      const userId = userValidation.userId;
 
       const deletedTask = await TaskDAO.deleteTask(id, userId);
 
@@ -484,7 +509,7 @@ class TaskController {
         });
       }
 
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         message: 'Tarea eliminada exitosamente',
         deletedTask: {
@@ -495,7 +520,7 @@ class TaskController {
 
     } catch (error) {
       console.error('Error al eliminar tarea:', error);
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         message: 'Intenta de nuevo más tarde'
       });
@@ -507,15 +532,14 @@ class TaskController {
    */
   async toggleStatus(req, res) {
     try {
-      const { id } = req.params;
-      const userId = req.user._id; // CORREGIDO: Cambiar de req.user.id a req.user._id
-
-      if (!userId) {
-        return res.status(401).json({
-          success: false,
-          message: 'Usuario no autenticado correctamente'
-        });
+      // Validar usuario primero
+      const userValidation = this._validateUser(req, res);
+      if (userValidation.error) {
+        return userValidation.response;
       }
+      
+      const { id } = req.params;
+      const userId = userValidation.userId;
 
       const currentTask = await TaskDAO.getTaskByIdAndUser(id, userId);
       
@@ -529,7 +553,7 @@ class TaskController {
       const newStatus = !currentTask.completada;
       const updatedTask = await TaskDAO.toggleTaskStatus(id, userId, newStatus);
 
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         message: `Tarea marcada como ${newStatus ? 'completada' : 'pendiente'}`,
         task: updatedTask.toJSON()
@@ -537,7 +561,7 @@ class TaskController {
 
     } catch (error) {
       console.error('Error al cambiar estado de tarea:', error);
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         message: 'Intenta de nuevo más tarde'
       });
