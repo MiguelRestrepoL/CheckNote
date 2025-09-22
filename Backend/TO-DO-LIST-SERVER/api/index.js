@@ -112,7 +112,6 @@ app.use(cors({
     'http://127.0.0.1:3000',
     'http://localhost:5173',
     'https://check-note-fend.vercel.app',
-    'https://check-note-git-development-miguels-projects-40b497cf.vercel.app',
     process.env.FRONTEND_URL
   ].filter(Boolean),
   credentials: true,
@@ -122,7 +121,7 @@ app.use(cors({
 
 // 2. Parseo de JSON - TEMPRANO para que esté disponible
 app.use(express.json({ 
-  limit: '10mb',
+  limit: '10mb',        
   verify: (req, res, buf) => {
     try {
       JSON.parse(buf);
