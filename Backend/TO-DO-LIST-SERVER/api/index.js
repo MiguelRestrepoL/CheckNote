@@ -228,6 +228,9 @@ const corsOptions = {
       console.log('❌ CORS blocked for origin:', origin);
       console.log('📋 Allowed origins:', allowedOrigins.map(o => o.toString()));
       callback(new Error(`Origin ${origin} not allowed by CORS policy`), false);
+    }
+  }
+};
 
 // 9. Detector de requests lentos
 app.use(slowRequestDetector(2000));
