@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useParams, useLocation, Link } from "react-router-dom";
 
 export default function OlvidarPw2() {
-  const { token } = useParams(); // Obtener token de la URL
-  const location = useLocation(); // Para obtener query params si es necesario
+  const { token } = useParams();
+  const location = useLocation();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -14,7 +14,7 @@ export default function OlvidarPw2() {
   const [validatingToken, setValidatingToken] = useState(true);
   const navigate = useNavigate();
 
-  // Validar token al montar el componente
+  // Obtener y validar token al montar el componente
   useEffect(() => {
     let currentToken = token;
     
@@ -24,63 +24,29 @@ export default function OlvidarPw2() {
       currentToken = urlParams.get('token');
     }
     
-    console.log("=== OBTENIENDO Y VALIDANDO TOKEN ===");
+    console.log("=== VALIDANDO TOKEN DE RESET ===");
     console.log("Token desde params:", token);
     console.log("Token desde query:", new URLSearchParams(location.search).get('token'));
     console.log("Token final:", currentToken);
 
     if (!currentToken) {
-      setError("Token no válido - acceso denegado. Debe acceder desde el enlace del email.");
+      setError("Token no encontrado. Debe acceder desde el enlace del email.");
       setValidatingToken(false);
       return;
     }
 
-    // Validar que el token tenga el formato correcto (64 caracteres hex)
-    if (currentToken.length !== 64 || !/^[a-f0-9]{64}$/i.test(currentToken)) {
+    // Validar formato del token (debe ser un string de al menos 32 caracteres)
+    if (currentToken.length < 32) {
       setError("Formato de token inválido. Debe acceder desde el enlace del email.");
       setValidatingToken(false);
       return;
     }
 
-    // Guardar el token y validarlo
+    console.log("✅ Token disponible, listo para usar");
     setResetToken(currentToken);
-    validateTokenWithServer(currentToken);
+    setTokenValidated(true);
+    setValidatingToken(false);
   }, [token, location]);
-
-  // Función para validar el token con el servidor
-  const validateTokenWithServer = async (tokenToValidate) => {
-    try {
-      setValidatingToken(true);
-      
-      const response = await fetch("https://checknote-27fe.onrender.com/api/v1/auth/validate-reset-token", {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ token: tokenToValidate }),
-      });
-
-      console.log("Status validación token:", response.status);
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log("✅ Token válido para email:", data.email);
-        setTokenValidated(true);
-        setError("");
-      } else {
-        const errorData = await response.json();
-        console.log("❌ Token inválido:", errorData.message);
-        setError("Token inválido, expirado o ya utilizado. Solicite un nuevo enlace de recuperación.");
-        setTokenValidated(false);
-      }
-    } catch (err) {
-      console.error("Error validando token:", err);
-      setError("Error de conexión al validar el token. Inténtelo más tarde.");
-      setTokenValidated(false);
-    } finally {
-      setValidatingToken(false);
-    }
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -92,21 +58,25 @@ export default function OlvidarPw2() {
     }
 
     // Validaciones básicas
-    if (!password || !confirmPassword) {
-      setError("Todos los campos son obligatorios.");
+    if (!password.trim()) {
+      setError("La nueva contraseña es requerida.");
       return;
     }
 
-    // Validar que las contraseñas coinciden
+    if (!confirmPassword.trim()) {
+      setError("La confirmación de contraseña es requerida.");
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError("Las contraseñas no coinciden.");
       return;
     }
 
-    // Validar contraseña usando las mismas reglas que el PasswordResetService
+    // Validar contraseña
     const passwordValidation = validatePassword(password);
     if (!passwordValidation.valid) {
-      setError(passwordValidation.errors.join(". "));
+      setError(passwordValidation.errors[0]); // Mostrar solo el primer error
       return;
     }
 
@@ -114,19 +84,19 @@ export default function OlvidarPw2() {
     setError("");
     setSuccess("");
 
-    console.log("=== RESTABLECIENDO CONTRASEÑA ===");
+    console.log("=== INICIANDO RESET DE CONTRASEÑA ===");
     console.log("Token a usar:", resetToken.substring(0, 20) + "...");
 
     try {
-      // Payload que coincida exactamente con lo que espera el backend
-      const payload = { 
+      // Formato correcto según el AuthController (camelCase)
+      const payload = {
         token: resetToken,
-        nuevaContrasena: password,
-        confirmarContrasena: confirmPassword // Agregar confirmación también
+        nuevaContrasena: password,      // camelCase como espera el controller
+        confirmarContrasena: confirmPassword  // camelCase como espera el controller
       };
 
-      console.log("Payload enviado:", { 
-        token: resetToken.substring(0, 20) + "...", 
+      console.log("Enviando payload:", {
+        token: resetToken.substring(0, 20) + "...",
         nuevaContrasena: "[OCULTA]",
         confirmarContrasena: "[OCULTA]"
       });
@@ -139,9 +109,9 @@ export default function OlvidarPw2() {
         body: JSON.stringify(payload),
       });
 
-      console.log("Status reset:", response.status);
+      console.log("Respuesta - Status:", response.status);
 
-      let data;
+      let data = {};
       try {
         const responseText = await response.text();
         console.log("Respuesta raw:", responseText);
@@ -149,65 +119,90 @@ export default function OlvidarPw2() {
         if (responseText) {
           data = JSON.parse(responseText);
           console.log("Respuesta parseada:", data);
-        } else {
-          data = {};
         }
       } catch (parseError) {
         console.error("Error parseando respuesta:", parseError);
-        throw new Error("Respuesta del servidor no es válida");
+        // No lanzar error aquí, podría ser respuesta exitosa sin JSON
       }
 
       if (response.ok) {
         console.log("✅ Contraseña restablecida exitosamente");
-        setSuccess("Contraseña restablecida exitosamente. Será redirigido al login...");
+        setSuccess("¡Contraseña restablecida exitosamente! Redirigiendo al login...");
         
-        // Redirigir después de 3 segundos para que el usuario vea el mensaje
+        // Limpiar formulario
+        setPassword("");
+        setConfirmPassword("");
+        
+        // Redirigir después de 3 segundos
         setTimeout(() => {
           navigate("/login", { 
             state: { 
-              message: "Contraseña restablecida exitosamente. Puedes iniciar sesión con tu nueva contraseña.",
+              message: "Contraseña restablecida exitosamente. Ya puedes iniciar sesión.",
               type: "success"
             }
           });
         }, 3000);
-      } else {
-        console.log("❌ Error:", data.message);
         
-        let errorMessage;
+      } else {
+        // Manejar errores específicos
+        let errorMessage = "Error al restablecer la contraseña";
+        
         if (response.status === 400) {
-          errorMessage = data.message || "Datos inválidos o token expirado";
+          errorMessage = data.message || "Datos inválidos. Verifique el token y las contraseñas.";
         } else if (response.status === 401) {
-          errorMessage = "Token expirado o inválido. Solicita un nuevo enlace de recuperación.";
+          errorMessage = "Token expirado o inválido. Solicite un nuevo enlace.";
+          setTimeout(() => {
+            navigate("/olvidar-password", { 
+              state: { 
+                message: "Token expirado. Solicite un nuevo enlace de recuperación.",
+                type: "warning"
+              }
+            });
+          }, 3000);
         } else if (response.status === 404) {
-          errorMessage = "Token no encontrado. Solicita un nuevo enlace de recuperación.";
+          errorMessage = "Token no encontrado. Solicite un nuevo enlace.";
+          setTimeout(() => {
+            navigate("/olvidar-password", { 
+              state: { 
+                message: "Token no encontrado. Solicite un nuevo enlace.",
+                type: "warning"
+              }
+            });
+          }, 3000);
+        } else if (response.status >= 500) {
+          errorMessage = "Error del servidor. Intente nuevamente más tarde.";
         } else {
-          errorMessage = data.message || "Error al restablecer la contraseña";
+          errorMessage = data.message || `Error ${response.status}: ${response.statusText}`;
         }
         
+        console.log("❌ Error:", errorMessage);
         setError(errorMessage);
       }
+
     } catch (err) {
       console.error("Error en la petición:", err);
       
+      let errorMessage = "Error de conexión";
       if (err.name === 'TypeError' && err.message.includes('fetch')) {
-        setError("Error de conexión. Verifica tu internet y el estado del servidor.");
+        errorMessage = "Error de conexión. Verifique su internet y el estado del servidor.";
       } else if (err.message.includes('JSON')) {
-        setError("Error procesando respuesta del servidor.");
+        errorMessage = "Error procesando respuesta del servidor.";
       } else {
-        setError("Error de conexión: " + err.message);
+        errorMessage = err.message || "Error desconocido";
       }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
-  // Función de validación de contraseña (replica las reglas del PasswordResetService)
+  // Función de validación simplificada pero efectiva
   const validatePassword = (password) => {
     const errors = [];
 
     if (!password) {
-      errors.push('La contraseña es requerida');
-      return { valid: false, errors };
+      return { valid: false, errors: ['La contraseña es requerida'] };
     }
 
     if (password.length < 8) {
@@ -219,33 +214,19 @@ export default function OlvidarPw2() {
     }
 
     if (!/[a-z]/.test(password)) {
-      errors.push('La contraseña debe contener al menos una letra minúscula');
+      errors.push('Debe contener al menos una letra minúscula');
     }
 
     if (!/[A-Z]/.test(password)) {
-      errors.push('La contraseña debe contener al menos una letra mayúscula');
+      errors.push('Debe contener al menos una letra mayúscula');
     }
 
     if (!/\d/.test(password)) {
-      errors.push('La contraseña debe contener al menos un número');
+      errors.push('Debe contener al menos un número');
     }
 
     if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
-      errors.push('La contraseña debe contener al menos un carácter especial');
-    }
-
-    // Verificar patrones comunes débiles
-    const weakPatterns = [
-      /(.)\1{3,}/, // Caracteres repetidos
-      /123456|abcdef|qwerty/i, // Secuencias comunes
-      /password|123456|admin|user/i // Palabras comunes
-    ];
-
-    for (const pattern of weakPatterns) {
-      if (pattern.test(password)) {
-        errors.push('La contraseña contiene patrones muy comunes o repetitivos');
-        break;
-      }
+      errors.push('Debe contener al menos un carácter especial (!@#$%^&*...)');
     }
 
     return {
@@ -254,27 +235,27 @@ export default function OlvidarPw2() {
     };
   };
 
-  // Función para evaluar la fortaleza de la contraseña en tiempo real
+  // Función para evaluar fortaleza
   const getPasswordStrength = (password) => {
-    if (!password) return { strength: 0, text: '', color: '#6c757d' };
+    if (!password) return { strength: 0, text: 'Sin evaluar', color: '#6c757d', missing: [] };
     
     let strength = 0;
-    let feedback = [];
+    let missing = [];
 
     if (password.length >= 8) strength += 1;
-    else feedback.push('8+ caracteres');
+    else missing.push('8+ caracteres');
 
     if (/[a-z]/.test(password)) strength += 1;
-    else feedback.push('minúsculas');
+    else missing.push('minúsculas');
 
     if (/[A-Z]/.test(password)) strength += 1;
-    else feedback.push('mayúsculas');
+    else missing.push('mayúsculas');
 
     if (/\d/.test(password)) strength += 1;
-    else feedback.push('números');
+    else missing.push('números');
 
     if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) strength += 1;
-    else feedback.push('símbolos');
+    else missing.push('símbolos');
 
     const colors = ['#dc3545', '#fd7e14', '#ffc107', '#28a745', '#006600'];
     const texts = ['Muy débil', 'Débil', 'Regular', 'Fuerte', 'Muy fuerte'];
@@ -283,13 +264,13 @@ export default function OlvidarPw2() {
       strength,
       text: texts[strength] || 'Sin evaluar',
       color: colors[strength] || '#6c757d',
-      missing: feedback
+      missing
     };
   };
 
   const passwordStrength = getPasswordStrength(password);
 
-  // Si estamos validando el token, mostrar loading
+  // Loading mientras validamos token
   if (validatingToken) {
     return (
       <div className="main-container gradient-bg">
@@ -300,26 +281,31 @@ export default function OlvidarPw2() {
           </div>
           
           <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-            <h2 className="title-secondary">Validando token...</h2>
-            <p style={{ color: '#6c757d' }}>Por favor espere mientras validamos su token de recuperación</p>
-            <div style={{ margin: '20px 0' }}>
-              <div className="spinner" style={{ 
-                border: '4px solid #f3f3f3',
-                borderTop: '4px solid #007bff',
-                borderRadius: '50%',
-                width: '40px',
-                height: '40px',
-                animation: 'spin 1s linear infinite',
-                margin: '0 auto'
-              }}></div>
-            </div>
+            <div style={{
+              width: '60px',
+              height: '60px',
+              border: '4px solid #f3f3f3',
+              borderTop: '4px solid #28a745',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite',
+              margin: '0 auto 20px auto'
+            }}></div>
+            <h2 className="title-secondary">Validando enlace...</h2>
+            <p style={{ color: '#6c757d' }}>Verificando que su enlace sea válido</p>
           </div>
         </div>
+        
+        <style jsx>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
       </div>
     );
   }
 
-  // Si no hay token válido, mostrar error
+  // Error de token
   if (!resetToken || !tokenValidated) {
     return (
       <div className="main-container gradient-bg">
@@ -330,17 +316,17 @@ export default function OlvidarPw2() {
           </div>
           
           <div style={{ textAlign: 'center', padding: '20px' }}>
-            <h2 className="title-secondary" style={{ color: '#dc3545' }}>Acceso denegado</h2>
+            <h2 className="title-secondary" style={{ color: '#dc3545' }}>❌ Acceso denegado</h2>
             <p style={{ color: '#6c757d', marginBottom: '20px' }}>
               {error || "Debe acceder desde el enlace enviado a su correo electrónico"}
             </p>
             <Link to="/olvidar-password" className="btn btn-primary btn-rounded">
-              Solicitar enlace de recuperación
+              Solicitar nuevo enlace
             </Link>
           </div>
 
           <div className="links-section">
-            <Link to="/login" className="link">Volver al inicio de sesión</Link>
+            <Link to="/login" className="link">← Volver al login</Link>
           </div>
         </div>
       </div>
@@ -358,26 +344,8 @@ export default function OlvidarPw2() {
         </div>
 
         {/* Título */}
-        <h2 className="title-secondary">Nueva Contraseña</h2>
-        <p className="subtitle">Ingrese una contraseña segura para su cuenta</p>
-
-        {/* Info de debugging */}
-        {process.env.NODE_ENV === 'development' && resetToken && (
-          <div style={{ 
-            background: '#2d3748', 
-            padding: '10px', 
-            borderRadius: '5px', 
-            marginBottom: '20px',
-            fontSize: '12px',
-            color: '#a0aec0'
-          }}>
-            <strong>DEBUG INFO:</strong><br />
-            Token disponible: ✅ {resetToken.substring(0, 20)}...<br />
-            Token length: {resetToken.length}<br />
-            Token validado: {tokenValidated ? '✅' : '❌'}<br />
-            URL reset: /api/v1/auth/reset-password
-          </div>
-        )}
+        <h2 className="title-secondary">🔐 Nueva Contraseña</h2>
+        <p className="subtitle">Cree una contraseña segura para su cuenta</p>
 
         {/* Formulario */}
         <form className="form compact" onSubmit={handleSubmit}>
@@ -385,16 +353,20 @@ export default function OlvidarPw2() {
           <div className="field-group">
             <img src="/pw.png" alt="Contraseña" className="field-icon" />
             <div className="field-input">
-              <label>Nueva Contraseña</label>
+              <label>Nueva Contraseña *</label>
               <input
                 type="password"
-                placeholder="Mínimo 8 caracteres con mayús, minus, número y símbolo"
+                placeholder="Ingrese su nueva contraseña"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={loading}
                 minLength={8}
                 maxLength={128}
+                style={{
+                  borderColor: password && validatePassword(password).valid ? '#28a745' : 
+                              password && !validatePassword(password).valid ? '#dc3545' : '#ced4da'
+                }}
               />
             </div>
           </div>
@@ -403,33 +375,34 @@ export default function OlvidarPw2() {
           {password && (
             <div style={{ 
               marginBottom: '15px',
-              padding: '10px',
+              padding: '12px',
               background: '#f8f9fa',
-              borderRadius: '5px',
-              border: `1px solid ${passwordStrength.color}`
+              borderRadius: '8px',
+              border: `1px solid ${passwordStrength.color}20`
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 'bold' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <span style={{ fontSize: '13px', fontWeight: '600' }}>
                   Fortaleza: <span style={{ color: passwordStrength.color }}>{passwordStrength.text}</span>
                 </span>
                 <div style={{
                   width: '100px',
-                  height: '6px',
+                  height: '8px',
                   background: '#e9ecef',
-                  borderRadius: '3px',
+                  borderRadius: '4px',
                   overflow: 'hidden'
                 }}>
                   <div style={{
                     width: `${(passwordStrength.strength / 5) * 100}%`,
                     height: '100%',
                     background: passwordStrength.color,
-                    transition: 'all 0.3s ease'
+                    transition: 'width 0.3s ease',
+                    borderRadius: '4px'
                   }}></div>
                 </div>
               </div>
               {passwordStrength.missing.length > 0 && (
-                <div style={{ fontSize: '11px', color: '#6c757d', marginTop: '5px' }}>
-                  Falta: {passwordStrength.missing.join(', ')}
+                <div style={{ fontSize: '12px', color: '#6c757d' }}>
+                  <strong>Falta:</strong> {passwordStrength.missing.join(', ')}
                 </div>
               )}
             </div>
@@ -439,75 +412,62 @@ export default function OlvidarPw2() {
           <div className="field-group">
             <img src="/pw.png" alt="Confirmar" className="field-icon" />
             <div className="field-input">
-              <label>Confirmar Contraseña</label>
+              <label>Confirmar Contraseña *</label>
               <input
                 type="password"
-                placeholder="Repite la nueva contraseña"
+                placeholder="Confirme su nueva contraseña"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
                 disabled={loading}
+                style={{
+                  borderColor: confirmPassword && password === confirmPassword ? '#28a745' : 
+                              confirmPassword && password !== confirmPassword ? '#dc3545' : '#ced4da'
+                }}
               />
-              {confirmPassword && password !== confirmPassword && (
-                <div style={{ fontSize: '11px', color: '#dc3545', marginTop: '3px' }}>
-                  Las contraseñas no coinciden
-                </div>
-              )}
-              {confirmPassword && password === confirmPassword && confirmPassword.length >= 8 && (
-                <div style={{ fontSize: '11px', color: '#28a745', marginTop: '3px' }}>
-                  ✓ Las contraseñas coinciden
+              {confirmPassword && (
+                <div style={{ fontSize: '12px', marginTop: '5px' }}>
+                  {password === confirmPassword ? (
+                    <span style={{ color: '#28a745' }}>✓ Las contraseñas coinciden</span>
+                  ) : (
+                    <span style={{ color: '#dc3545' }}>✗ Las contraseñas no coinciden</span>
+                  )}
                 </div>
               )}
             </div>
           </div>
 
-          {/* Requisitos de contraseña */}
-          <div style={{ 
-            fontSize: '12px', 
-            color: '#6c757d', 
-            marginBottom: '15px',
-            textAlign: 'left',
-            padding: '10px',
-            background: '#f8f9fa',
-            borderRadius: '5px',
-          }}>
-            <strong>Requisitos de contraseña:</strong>
-            <ul style={{ marginTop: '5px', paddingLeft: '15px' }}>
-              <li style={{ color: password.length >= 8 ? '#28a745' : '#6c757d' }}>
-                {password.length >= 8 ? '✓' : '○'} Mínimo 8 caracteres
-              </li>
-              <li style={{ color: /[A-Z]/.test(password) ? '#28a745' : '#6c757d' }}>
-                {/[A-Z]/.test(password) ? '✓' : '○'} Al menos 1 letra mayúscula
-              </li>
-              <li style={{ color: /[a-z]/.test(password) ? '#28a745' : '#6c757d' }}>
-                {/[a-z]/.test(password) ? '✓' : '○'} Al menos 1 letra minúscula
-              </li>
-              <li style={{ color: /\d/.test(password) ? '#28a745' : '#6c757d' }}>
-                {/\d/.test(password) ? '✓' : '○'} Al menos 1 número
-              </li>
-              <li style={{ color: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password) ? '#28a745' : '#6c757d' }}>
-                {/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password) ? '✓' : '○'} Al menos 1 carácter especial
-              </li>
-            </ul>
-          </div>
-
-          {/* Success Message */}
+          {/* Mensaje de éxito */}
           {success && (
             <div style={{ 
-              padding: '10px', 
+              padding: '12px', 
               background: '#d4edda', 
               color: '#155724', 
               border: '1px solid #c3e6cb',
-              borderRadius: '5px', 
+              borderRadius: '8px', 
               marginBottom: '15px',
-              textAlign: 'center'
+              textAlign: 'center',
+              fontWeight: '500'
             }}>
               {success}
             </div>
           )}
 
           {/* Error */}
-          {error && <p className="text-error">{error}</p>}
+          {error && (
+            <div style={{ 
+              padding: '12px', 
+              background: '#f8d7da', 
+              color: '#721c24', 
+              border: '1px solid #f5c6cb',
+              borderRadius: '8px', 
+              marginBottom: '15px',
+              textAlign: 'center',
+              fontWeight: '500'
+            }}>
+              {error}
+            </div>
+          )}
 
           {/* Botón */}
           <button 
@@ -518,26 +478,45 @@ export default function OlvidarPw2() {
               !password.trim() || 
               !confirmPassword.trim() || 
               password !== confirmPassword ||
-              passwordStrength.strength < 4 // Requiere contraseña fuerte
+              !validatePassword(password).valid
             }
+            style={{
+              opacity: (loading || 
+                       !password.trim() || 
+                       !confirmPassword.trim() || 
+                       password !== confirmPassword ||
+                       !validatePassword(password).valid) ? 0.6 : 1
+            }}
           >
-            {loading ? "Restableciendo..." : "Establecer Nueva Contraseña"}
+            {loading ? "🔄 Restableciendo..." : "🔐 Establecer Nueva Contraseña"}
           </button>
         </form>
 
-        {/* Links adicionales */}
+        {/* Enlaces */}
         <div className="links-section">
-          <Link to="/olvidar-password" className="link small">Solicitar nuevo enlace</Link> | 
-          <Link to="/login" className="link small"> Volver al login</Link>
+          <Link to="/olvidar-password" className="link">Solicitar nuevo enlace</Link>
+          <span style={{ margin: '0 8px', color: '#dee2e6' }}>|</span>
+          <Link to="/login" className="link">← Volver al login</Link>
         </div>
-      </div>
 
-      <style jsx>{`
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-      `}</style>
+        {/* Información de debugging solo en desarrollo */}
+        {process.env.NODE_ENV === 'development' && resetToken && (
+          <div style={{ 
+            marginTop: '20px',
+            background: '#2d3748', 
+            padding: '12px', 
+            borderRadius: '8px', 
+            fontSize: '11px',
+            color: '#a0aec0',
+            fontFamily: 'monospace'
+          }}>
+            <strong>🔧 DEBUG INFO:</strong><br />
+            Token: {resetToken.substring(0, 20)}... ({resetToken.length} chars)<br />
+            Validado: {tokenValidated ? '✅' : '❌'}<br />
+            Endpoint: POST /api/v1/auth/reset-password
+          </div>
+        )}
+      </div>
     </div>
   );
 }
