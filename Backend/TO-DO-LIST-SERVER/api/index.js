@@ -102,10 +102,54 @@ async function initializeServices() {
 }
 
 // ========================================
-// MIDDLEWARES DE SEGURIDAD Y LOGGING
+// MIDDLEWARES EN ORDEN CORRECTO
 // ========================================
 
-// Headers de seguridad (tu implementación existente + mejoras FASE 5)
+// 1. CORS MANUAL - DEBE SER LO PRIMERO
+app.use(cors({
+  origin: [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://localhost:5173',
+    'https://check-note-fend.vercel.app',
+    process.env.FRONTEND_URL
+  ].filter(Boolean),
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
+}));
+
+// 2. Parseo de JSON - TEMPRANO para que esté disponible
+app.use(express.json({ 
+  limit: '10mb',        
+  verify: (req, res, buf) => {
+    try {
+      JSON.parse(buf);
+    } catch (e) {
+      logger.error('Invalid JSON received', {
+        ip: req.ip,
+        userAgent: req.get('User-Agent'),
+        requestId: req.requestId,
+        error: e.message
+      });
+      
+      res.status(400).json({
+        success: false,
+        message: 'JSON inválido en el cuerpo de la petición',
+        code: 'INVALID_JSON',
+        requestId: req.requestId
+      });
+      throw new Error('Invalid JSON');
+    }
+  }
+}));
+
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// 3. Request ID único
+app.use(requestId);
+
+// 4. Headers de seguridad
 app.use((req, res, next) => {
   // Headers de seguridad existentes
   securityHeaders(req, res, () => {});
@@ -121,19 +165,13 @@ app.use((req, res, next) => {
   next();
 });
 
-// Request ID único
-app.use(requestId);
-
-// Tiempo de respuesta
+// 5. Tiempo de respuesta
 app.use(responseTime);
 
-// Rate limiting global para todas las rutas de API - FASE 5
-app.use('/api', apiLimiter);
-
-// Logging de requests
+// 6. Logging de requests
 app.use(requestLogger);
 
-// FASE 5: Logging avanzado de eventos de seguridad
+// 7. FASE 5: Logging avanzado de eventos de seguridad
 app.use((req, res, next) => {
   const timestamp = new Date().toISOString();
   const ip = req.ip || req.connection.remoteAddress;
@@ -154,8 +192,8 @@ app.use((req, res, next) => {
   next();
 });
 
-// Detector de requests lentos (>2 segundos)
-app.use(slowRequestDetector(2000));
+// 8. Rate limiting - DESPUÉS del CORS
+app.use('/api', apiLimiter);
 
 // ========================================
 // CONFIGURACIÓN CORS MEJORADA PARA VERCEL
@@ -202,10 +240,42 @@ const corsOptions = {
       console.log('❌ CORS blocked for origin:', origin);
       console.log('📋 Allowed origins:', allowedOrigins.map(o => o.toString()));
       callback(new Error(`Origin ${origin} not allowed by CORS policy`), false);
+=======
+// 9. Detector de requests lentos
+app.use(slowRequestDetector(2000));
+
+// 10. CORS con librería (como backup)
+app.use(cors({
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      'http://localhost:3000', 
+      'http://127.0.0.1:3000',
+      'http://localhost:5173',
+      'https://check-note-fend.vercel.app',
+      process.env.FRONTEND_URL
+    ].filter(Boolean);
+    
+    console.log('🔍 CORS Library - Origin:', origin);
+    console.log('🔍 CORS Library - Allowed:', allowedOrigins);
+    
+    // Permitir requests sin origin en desarrollo
+    if (!origin) {
+      console.log('✅ CORS Library - Sin origin, permitiendo');
+      return callback(null, true);
+    }
+    
+    if (allowedOrigins.includes(origin)) {
+      console.log('✅ CORS Library - Origin permitido:', origin);
+      callback(null, true);
+    } else {
+      console.log('❌ CORS Library - Origin bloqueado:', origin);
+      callback(new Error('Not allowed by CORS'));
+
     }
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+
   allowedHeaders: [
     'Content-Type', 
     'Authorization', 
@@ -249,34 +319,12 @@ app.use((req, res, next) => {
   next();
 });
 
-// Parseo de JSON con límites de seguridad mejorados - FASE 5
-app.use(express.json({ 
-  limit: '10mb',
-  verify: (req, res, buf) => {
-    try {
-      JSON.parse(buf);
-    } catch (e) {
-      logger.error('Invalid JSON received', {
-        ip: req.ip,
-        userAgent: req.get('User-Agent'),
-        requestId: req.requestId,
-        error: e.message
-      });
-      
-      res.status(400).json({
-        success: false,
-        message: 'JSON inválido en el cuerpo de la petición',
-        code: 'INVALID_JSON',
-        requestId: req.requestId
-      });
-      throw new Error('Invalid JSON');
-    }
-  }
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  optionsSuccessStatus: 200
 }));
 
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Logging del body de requests (solo desarrollo)
+// 11. Logging del body de requests (solo desarrollo)
 app.use(requestBodyLogger);
 
 // ========================================
@@ -345,6 +393,25 @@ app.get('/health', (req, res) => {
     emailService: healthCheck.security.emailService,
     origin: req.headers.origin
   });
+  
+  res.status(200).json({
+    success: true,
+    data: healthCheck
+  });
+});
+
+// AGREGAR: Health check para API v1
+app.get('/api/v1/health', (req, res) => {
+  console.log('📋 Health check API v1 solicitado');
+  
+  const healthCheck = {
+    uptime: process.uptime(),
+    message: 'API OK',
+    timestamp: new Date().toISOString(),
+    version: '1.5.0',
+    cors: 'enabled-fixed-order',
+    api: 'operational'
+  };
   
   res.status(200).json({
     success: true,
@@ -649,7 +716,11 @@ async function startServer() {
       console.log(`🌐 Servidor disponible en: http://localhost:${PORT}`);
       console.log(`📖 Documentación Swagger: http://localhost:${PORT}/api-docs`);
       console.log(`📋 Health Check: http://localhost:${PORT}/health`);
+
       console.log(`🧪 CORS Test: http://localhost:${PORT}/cors-test`);
+
+      console.log(`📋 API Health Check: http://localhost:${PORT}/api/v1/health`);
+
       console.log(`🔒 Security Status: http://localhost:${PORT}/security-status`);
       if (process.env.NODE_ENV === 'development') {
         console.log(`📧 Test Email: POST http://localhost:${PORT}/test-email`);
@@ -666,6 +737,7 @@ async function startServer() {
       console.log('   ✅ Logging avanzado');
       console.log('   ✅ Rate Limiting inteligente');
       console.log('   ✅ Recuperación de contraseñas');
+      console.log('   ✅ CORS manual + library en orden correcto');
       console.log(`   ${EmailService.isConfigured === true ? '✅' : EmailService.isConfigured === 'simulation' ? '⚠️' : '❌'} Servicio de email: ${emailStatus}`);
       console.log('   ✅ CORS mejorado para Vercel');
       
