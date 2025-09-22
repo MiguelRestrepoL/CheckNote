@@ -337,8 +337,8 @@ class PasswordResetService {
   static CONFIG = {
     TOKEN_LENGTH: 32, // bytes
     TOKEN_EXPIRY_HOURS: 1,
-    MAX_TOKENS_PER_HOUR: 3,
-    MAX_USE_ATTEMPTS: 3
+    MAX_TOKENS_PER_HOUR: 5,
+    MAX_USE_ATTEMPTS: 5,
   };
 
   // GENERAR TOKEN SEGURO
