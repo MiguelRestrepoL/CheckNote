@@ -1,0 +1,446 @@
+/* ============================================
+   GLOBALCSS3.CSS - Sistema para páginas de perfil y configuración
+   Basado en GlobalCSS2 con extensiones específicas
+   ============================================ */
+
+/* Importar base de GlobalCSS2 */
+@import url('./GlobalCSS2.css');
+
+/* ============================================
+   VARIABLES ADICIONALES PARA PERFIL
+   ============================================ */
+:root {
+  /* Spacing adicional */
+  --spacing-4xl: 48px;
+  --spacing-5xl: 64px;
+  
+  /* Colores específicos para formularios */
+  --form-bg: rgba(255,255,255,0.05);
+  --form-border: rgba(255,255,255,0.1);
+  --form-border-focus: rgba(16, 185, 129, 0.5);
+  --form-label-bg: rgba(255,255,255,0.9);
+  
+  /* Sombras para formularios */
+  --shadow-input: 0 2px 4px rgba(0,0,0,0.1);
+  --shadow-input-focus: 0 0 0 3px rgba(16, 185, 129, 0.1);
+  
+  /* Colores de estado */
+  --success: #10b981;
+  --error: #ef4444;
+  --warning: #f59e0b;
+  --info: #3b82f6;
+  
+  /* Anchos máximos para campos */
+  --input-width-sm: 300px;
+  --input-width-md: 400px;
+  --input-width-lg: 500px;
+}
+
+/* ============================================
+   LAYOUT DE PERFIL
+   ============================================ */
+.profile-container {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: var(--spacing-xl);
+  width: 100%;
+  align-items: start;
+}
+
+.profile-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.profile-content {
+  max-width: none;
+  text-align: left;
+  min-height: 500px;
+}
+
+/* ============================================
+   LOGO Y BRANDING
+   ============================================ */
+.brand-logo {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-lg);
+}
+
+.brand-icon {
+  width: 40px;
+  height: 40px;
+  background: var(--primary);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: bold;
+  color: white;
+}
+
+.brand-text {
+  font-size: 20px;
+  font-weight: bold;
+  color: var(--primary);
+}
+
+/* ============================================
+   NAVEGACIÓN DE SIDEBAR
+   ============================================ */
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.nav-button {
+  padding: 12px 24px;
+  border-radius: var(--radius-sm);
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  background: var(--bg-filter);
+  color: var(--text-primary);
+  text-align: left;
+  justify-content: flex-start;
+}
+
+.nav-button:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.nav-button.active {
+  background: var(--primary);
+  color: white;
+}
+
+.nav-button.danger {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  margin-top: var(--spacing-lg);
+  text-align: center;
+}
+
+/* ============================================
+   FORMULARIOS
+   ============================================ */
+.form-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-lg);
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.form-label {
+  background: var(--form-label-bg);
+  color: var(--text-dark);
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--form-border);
+  background: var(--form-bg);
+  color: var(--text-primary);
+  font-size: 14px;
+  outline: none;
+  transition: all var(--transition);
+  box-sizing: border-box;
+}
+
+.form-input:focus {
+  border-color: var(--form-border-focus);
+  box-shadow: var(--shadow-input-focus);
+}
+
+.form-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.form-input::placeholder {
+  color: rgba(255,255,255,0.5);
+}
+
+/* Tamaños específicos de inputs */
+.form-input.width-sm {
+  max-width: var(--input-width-sm);
+}
+
+.form-input.width-md {
+  max-width: var(--input-width-md);
+}
+
+.form-input.width-lg {
+  max-width: var(--input-width-lg);
+}
+
+/* ============================================
+   BOTONES DE ACCIÓN
+   ============================================ */
+.action-button {
+  padding: 12px 24px;
+  border-radius: var(--radius-sm);
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  box-sizing: border-box;
+  align-self: flex-start;
+}
+
+.action-button.primary {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: white;
+  min-width: 160px;
+}
+
+.action-button.info {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white;
+  min-width: 200px;
+}
+
+.action-button.danger {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  min-width: 200px;
+}
+
+.action-button.loading {
+  background: linear-gradient(135deg, #6b7280, #4b5563);
+  cursor: not-allowed;
+}
+
+.action-button:hover:not(.loading) {
+  transform: translateY(-1px);
+  opacity: 0.95;
+}
+
+.action-button:disabled {
+  cursor: not-allowed;
+}
+
+/* ============================================
+   MENSAJES DE ESTADO
+   ============================================ */
+.status-message {
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  text-align: center;
+  font-weight: 500;
+  margin-bottom: var(--spacing-lg);
+}
+
+.status-message.error {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+}
+
+.status-message.success {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: white;
+}
+
+.status-message.warning {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+}
+
+.status-message.info {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white;
+}
+
+/* ============================================
+   SECCIONES ESPECIALES
+   ============================================ */
+.section-header {
+  margin-bottom: var(--spacing-sm);
+}
+
+.section-description {
+  color: var(--text-muted);
+  font-size: 14px;
+  margin-bottom: var(--spacing-xl);
+}
+
+.danger-zone {
+  border-top: 1px solid rgba(255,255,255,0.1);
+  padding-top: var(--spacing-xl);
+}
+
+.danger-zone-title {
+  color: #ef4444;
+  margin-bottom: var(--spacing-md);
+  font-size: 16px;
+}
+
+.danger-zone-description {
+  color: var(--text-muted);
+  font-size: 14px;
+  margin-bottom: var(--spacing-lg);
+}
+
+/* ============================================
+   ESTADOS DE CARGA
+   ============================================ */
+.loading-container {
+  text-align: center;
+  padding: 40px;
+}
+
+.loading-icon {
+  margin-top: 20px;
+  font-size: 24px;
+}
+
+/* ============================================
+   RESPONSIVE PARA PERFIL
+   ============================================ */
+@media (max-width: 768px) {
+  .profile-container {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-lg);
+  }
+  
+  .profile-sidebar {
+    order: 2;
+  }
+  
+  .profile-content {
+    order: 1;
+  }
+  
+  .form-grid-2 {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+  
+  .brand-logo {
+    justify-content: center;
+  }
+  
+  .sidebar-nav {
+    flex-direction: row;
+    overflow-x: auto;
+    gap: var(--spacing-xs);
+    padding-bottom: var(--spacing-sm);
+  }
+  
+  .nav-button {
+    min-width: 120px;
+    text-align: center;
+  }
+  
+  .nav-button.danger {
+    margin-top: 0;
+    margin-left: var(--spacing-lg);
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-content {
+    min-height: auto;
+  }
+  
+  .form-input {
+    padding: 10px 14px;
+  }
+  
+  .form-label {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+  
+  .action-button {
+    padding: 10px 20px;
+    font-size: 13px;
+    min-width: 140px;
+  }
+  
+  .action-button.info,
+  .action-button.danger {
+    min-width: 160px;
+  }
+  
+  .brand-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+  
+  .brand-text {
+    font-size: 18px;
+  }
+  
+  .sidebar-nav {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .nav-button {
+    min-width: 100px;
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+}
+
+/* ============================================
+   UTILIDADES ADICIONALES
+   ============================================ */
+.text-center { text-align: center; }
+.text-left { text-align: left; }
+.text-right { text-align: right; }
+
+.mb-0 { margin-bottom: 0; }
+.mb-sm { margin-bottom: var(--spacing-sm); }
+.mb-md { margin-bottom: var(--spacing-md); }
+.mb-lg { margin-bottom: var(--spacing-lg); }
+.mb-xl { margin-bottom: var(--spacing-xl); }
+
+.mt-0 { margin-top: 0; }
+.mt-sm { margin-top: var(--spacing-sm); }
+.mt-md { margin-top: var(--spacing-md); }
+.mt-lg { margin-top: var(--spacing-lg); }
+.mt-xl { margin-top: var(--spacing-xl); }
+
+.w-full { width: 100%; }
+.max-w-none { max-width: none; }
+
+/* Animaciones */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}

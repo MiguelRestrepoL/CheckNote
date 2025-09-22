@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import "./creartarea.css";
+import { useNavigate, Link } from "react-router-dom";
+// NO importar creartarea.css - usar solo globalcss2.css
 
 export default function CrearTarea() {
   const [formData, setFormData] = useState({
     titulo: "",
     descripcion: "", 
     fechaVencimiento: "", 
-    hora: "", // Agregamos el campo hora al estado
-    prioridad: "media", 
+    hora: "",
+    prioridad: "media",
+    estado: "pendiente", // Nuevo campo para Kanban
     completada: false, 
   });
   const [error, setError] = useState("");
@@ -61,10 +62,8 @@ export default function CrearTarea() {
     // Combinar fecha y hora en formato ISO
     let fechaCompleta = null;
     if (formData.fechaVencimiento && formData.hora) {
-      // Crear fecha completa en formato ISO
       fechaCompleta = new Date(`${formData.fechaVencimiento}T${formData.hora}:00`).toISOString();
     } else if (formData.fechaVencimiento) {
-      // Si solo hay fecha, usar las 23:59 del día
       fechaCompleta = new Date(`${formData.fechaVencimiento}T23:59:00`).toISOString();
     }
 
@@ -73,13 +72,14 @@ export default function CrearTarea() {
       titulo: formData.titulo.trim(),
       descripcion: formData.descripcion.trim(),
       prioridad: formData.prioridad,
+      estado: formData.estado, // Incluir estado para Kanban
       completada: formData.completada,
       fechaVencimiento: fechaCompleta,
       userId: userId
     };
 
-    console.log("Datos a enviar:", taskData); // Para debugging
-    console.log("Token:", token); // Para debugging
+    console.log("Datos a enviar:", taskData);
+    console.log("Token:", token);
 
     try {
       const res = await fetch("https://checknote-27fe.onrender.com/api/v1/tasks", {
@@ -91,13 +91,12 @@ export default function CrearTarea() {
         body: JSON.stringify(taskData),
       });
 
-      console.log("Status de respuesta:", res.status); // Para debugging
+      console.log("Status de respuesta:", res.status);
 
       if (!res.ok) {
         const errorData = await res.json();
-        console.log("Error del servidor:", errorData); // Para debugging
+        console.log("Error del servidor:", errorData);
         
-        // Manejo específico de errores de autenticación
         if (res.status === 401) {
           setError("Tu sesión ha expirado. Redirigiendo al login...");
           localStorage.removeItem('token');
@@ -120,15 +119,14 @@ export default function CrearTarea() {
       }
 
       const result = await res.json();
-      console.log("Tarea creada exitosamente:", result); // Para debugging
+      console.log("Tarea creada exitosamente:", result);
       
-      // Redirigir al dashboard o mostrar mensaje de éxito
       navigate('/home', { 
-        state: { message: "Tarea creada exitosamente" } 
+        state: { success: "✅ Tarea creada exitosamente" } 
       });
 
     } catch (err) {
-      console.error("Error de red:", err); // Para debugging
+      console.error("Error de red:", err);
       if (err.name === 'TypeError' && err.message.includes('fetch')) {
         setError("Error de conexión. Verifica tu conexión a internet.");
       } else {
@@ -141,113 +139,362 @@ export default function CrearTarea() {
 
   return (
     <div className="page-root">
-      {/* ===== TOPBAR ===== */}
+      {/* TOPBAR */}
       <header className="topbar">
         <div className="topbar-left">
           <img src="/usuario.png" alt="usuario" className="icon user-icon" />
           <span className="username">{localStorage.getItem('userName') || 'Usuario'}</span>
         </div>
+
         <div className="topbar-center">
           <div className="search-wrap">
-            <span className="search-icon">🔍</span>
+            <img src="/search.png" alt="buscar" className="search-icon" />
             <input className="search-input" placeholder="Buscar tareas..." />
           </div>
         </div>
+
         <div className="topbar-right">
-          <img src="/settings.png" alt="settings" className="icon" />
+          <Link to="/perfil">
+            <img src="/settings.png" alt="configuración" className="icon" />
+          </Link>
         </div>
       </header>
 
-      {/* ===== FORMULARIO ===== */}
+      {/* MAIN */}
       <main className="main">
-        <div className="form-wrap">
-          <form onSubmit={handleSubmit}>
-            <label htmlFor="titulo">Título</label>
-            <input
-              type="text"
-              id="titulo"
-              name="titulo"
-              value={formData.titulo}
-              onChange={handleChange}
-              placeholder="Escribe el título de la tarea"
-              required
-            />
-
-            <label htmlFor="descripcion">Detalles</label>
-            <textarea
-              id="descripcion"
-              name="descripcion"
-              value={formData.descripcion}
-              onChange={handleChange}
-              placeholder="Escribe los detalles..."
-              required
-            ></textarea>
-
-            {/* Campo combinado de Fecha y Hora */}
-            <div className="date-time-row">
+        <div className="center-column">
+          {/* Formulario en tarjeta */}
+          <section className="task-card" style={{ maxWidth: '520px', textAlign: 'left' }}>
+            <h3 className="task-title" style={{ textAlign: 'center', marginBottom: '20px' }}>
+              📝 Crear Nueva Tarea
+            </h3>
+            
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {/* Título */}
               <div>
-                <label htmlFor="fechaVencimiento">Fecha de vencimiento</label>
+                <label htmlFor="titulo" style={{ 
+                  display: 'block', 
+                  marginBottom: '6px', 
+                  fontSize: '14px',
+                  color: 'var(--text-secondary)',
+                  fontWeight: '500'
+                }}>
+                  Título de la tarea
+                </label>
                 <input
-                  type="date"
-                  id="fechaVencimiento"
-                  name="fechaVencimiento"
-                  value={formData.fechaVencimiento}
+                  type="text"
+                  id="titulo"
+                  name="titulo"
+                  value={formData.titulo}
                   onChange={handleChange}
+                  placeholder="Ej: Completar proyecto de React"
                   required
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    background: 'rgba(255,255,255,0.05)',
+                    color: 'var(--text-primary)',
+                    fontSize: '14px',
+                    outline: 'none',
+                    transition: 'all var(--transition)',
+                    boxSizing: 'border-box'
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = 'var(--primary-light)';
+                    e.target.style.background = 'rgba(255,255,255,0.08)';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = 'rgba(255,255,255,0.1)';
+                    e.target.style.background = 'rgba(255,255,255,0.05)';
+                  }}
                 />
               </div>
+
+              {/* Descripción */}
               <div>
-                <label htmlFor="hora">Hora de vencimiento</label>
-                <input
-                  type="time"
-                  id="hora"
-                  name="hora"
-                  value={formData.hora}
+                <label htmlFor="descripcion" style={{ 
+                  display: 'block', 
+                  marginBottom: '6px', 
+                  fontSize: '14px',
+                  color: 'var(--text-secondary)',
+                  fontWeight: '500'
+                }}>
+                  Descripción
+                </label>
+                <textarea
+                  id="descripcion"
+                  name="descripcion"
+                  value={formData.descripcion}
                   onChange={handleChange}
+                  placeholder="Describe los detalles de la tarea..."
                   required
+                  style={{
+                    width: '100%',
+                    minHeight: '80px',
+                    padding: '12px',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    background: 'rgba(255,255,255,0.05)',
+                    color: 'var(--text-primary)',
+                    fontSize: '14px',
+                    outline: 'none',
+                    resize: 'vertical',
+                    transition: 'all var(--transition)',
+                    boxSizing: 'border-box',
+                    fontFamily: 'inherit'
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = 'var(--primary-light)';
+                    e.target.style.background = 'rgba(255,255,255,0.08)';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = 'rgba(255,255,255,0.1)';
+                    e.target.style.background = 'rgba(255,255,255,0.05)';
+                  }}
                 />
               </div>
-            </div>
 
-            <label htmlFor="prioridad">Prioridad</label>
-            <select
-              id="prioridad"
-              name="prioridad"
-              value={formData.prioridad}
-              onChange={handleChange}
-              required
-            >
-              <option value="baja">Baja</option>
-              <option value="media">Media</option>
-              <option value="alta">Alta</option>
-            </select>
+              {/* Fecha y Hora */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label htmlFor="fechaVencimiento" style={{ 
+                    display: 'block', 
+                    marginBottom: '6px', 
+                    fontSize: '14px',
+                    color: 'var(--text-secondary)',
+                    fontWeight: '500'
+                  }}>
+                    Fecha límite
+                  </label>
+                  <input
+                    type="date"
+                    id="fechaVencimiento"
+                    name="fechaVencimiento"
+                    value={formData.fechaVencimiento}
+                    onChange={handleChange}
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      borderRadius: 'var(--radius-sm)',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      background: 'rgba(255,255,255,0.05)',
+                      color: 'var(--text-primary)',
+                      fontSize: '14px',
+                      outline: 'none',
+                      transition: 'all var(--transition)',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="hora" style={{ 
+                    display: 'block', 
+                    marginBottom: '6px', 
+                    fontSize: '14px',
+                    color: 'var(--text-secondary)',
+                    fontWeight: '500'
+                  }}>
+                    Hora límite
+                  </label>
+                  <input
+                    type="time"
+                    id="hora"
+                    name="hora"
+                    value={formData.hora}
+                    onChange={handleChange}
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      borderRadius: 'var(--radius-sm)',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      background: 'rgba(255,255,255,0.05)',
+                      color: 'var(--text-primary)',
+                      fontSize: '14px',
+                      outline: 'none',
+                      transition: 'all var(--transition)',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+              </div>
 
-            {/* Checkbox para 'Completada' (estado) */}
-            <div className="terms">
-              <input
-                type="checkbox"
-                id="completada"
-                name="completada"
-                checked={formData.completada}
-                onChange={handleChange}
-              />
-              <label htmlFor="completada">Tarea Completada</label>
-            </div>
+              {/* Prioridad */}
+              <div>
+                <label htmlFor="prioridad" style={{ 
+                  display: 'block', 
+                  marginBottom: '6px', 
+                  fontSize: '14px',
+                  color: 'var(--text-secondary)',
+                  fontWeight: '500'
+                }}>
+                  Nivel de prioridad
+                </label>
+                <select
+                  id="prioridad"
+                  name="prioridad"
+                  value={formData.prioridad}
+                  onChange={handleChange}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    background: 'rgba(255,255,255,0.05)',
+                    color: 'var(--text-primary)',
+                    fontSize: '14px',
+                    outline: 'none',
+                    transition: 'all var(--transition)',
+                    boxSizing: 'border-box',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <option value="baja" style={{ background: '#111827', color: '#ffffff' }}>
+                    🟢 Baja prioridad
+                  </option>
+                  <option value="media" style={{ background: '#111827', color: '#ffffff' }}>
+                    🟡 Prioridad media
+                  </option>
+                  <option value="alta" style={{ background: '#111827', color: '#ffffff' }}>
+                    🔴 Alta prioridad
+                  </option>
+                </select>
+              </div>
 
-            {error && <p className="error">{error}</p>}
-            <button type="submit" disabled={loading}>
-              {loading ? "Creando tarea..." : "Crear Tarea"}
-            </button>
-          </form>
+              {/* Estado Kanban */}
+              <div>
+                <label htmlFor="estado" style={{ 
+                  display: 'block', 
+                  marginBottom: '6px', 
+                  fontSize: '14px',
+                  color: 'var(--text-secondary)',
+                  fontWeight: '500'
+                }}>
+                  Estado inicial de la tarea
+                </label>
+                <select
+                  id="estado"
+                  name="estado"
+                  value={formData.estado}
+                  onChange={handleChange}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    background: 'rgba(255,255,255,0.05)',
+                    color: 'var(--text-primary)',
+                    fontSize: '14px',
+                    outline: 'none',
+                    transition: 'all var(--transition)',
+                    boxSizing: 'border-box',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <option value="pendiente" style={{ background: '#111827', color: '#ffffff' }}>
+                    ⏰ Pendiente
+                  </option>
+                  <option value="en_progreso" style={{ background: '#111827', color: '#ffffff' }}>
+                    ⚡ En Progreso
+                  </option>
+                  <option value="terminada" style={{ background: '#111827', color: '#ffffff' }}>
+                    ✅ Terminada
+                  </option>
+                </select>
+              </div>
+
+              {/* Checkbox completada */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+                <input
+                  type="checkbox"
+                  id="completada"
+                  name="completada"
+                  checked={formData.completada}
+                  onChange={handleChange}
+                  style={{
+                    width: '18px',
+                    height: '18px',
+                    accentColor: 'var(--primary)',
+                    cursor: 'pointer'
+                  }}
+                />
+                <label htmlFor="completada" style={{ 
+                  fontSize: '14px',
+                  color: 'var(--text-secondary)',
+                  cursor: 'pointer',
+                  userSelect: 'none'
+                }}>
+                  ✅ Marcar como completada
+                </label>
+              </div>
+
+              {/* Mensaje de error */}
+              {error && (
+                <div style={{
+                  padding: '12px',
+                  borderRadius: 'var(--radius-sm)',
+                  background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+                  color: 'white',
+                  fontSize: '14px',
+                  textAlign: 'center',
+                  fontWeight: '500'
+                }}>
+                  {error}
+                </div>
+              )}
+
+              {/* Botón submit */}
+              <button 
+                type="submit" 
+                disabled={loading}
+                className="filter"
+                style={{
+                  marginTop: '12px',
+                  padding: '14px 24px',
+                  background: loading 
+                    ? 'linear-gradient(135deg, #6b7280, #4b5563)' 
+                    : 'linear-gradient(135deg, var(--primary), var(--primary-dark))',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 'var(--radius-sm)',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  transition: 'all var(--transition)',
+                  boxShadow: 'var(--shadow-filter)',
+                  opacity: loading ? 0.7 : 1
+                }}
+                onMouseEnter={(e) => {
+                  if (!loading) {
+                    e.target.style.transform = 'translateY(-1px)';
+                    e.target.style.boxShadow = '0 8px 25px rgba(16,185,129,0.3)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!loading) {
+                    e.target.style.transform = 'translateY(0)';
+                    e.target.style.boxShadow = 'var(--shadow-filter)';
+                  }
+                }}
+              >
+                {loading ? "⏳ Creando tarea..." : "✨ Crear Tarea"}
+              </button>
+            </form>
+          </section>
         </div>
       </main>
 
-      {/* ===== FOOTER ===== */}
+      {/* FOOTER */}
       <footer className="footer">
-        <a href="/home">
-          <img src="/home.png" alt="home" className="icon" />
-          <span>Inicio</span>
-        </a>
+        <Link to="/home" className="footer-link">
+          <img src="/home.png" alt="inicio" className="icon" />
+          <span className="footer-text">Inicio</span>
+        </Link>
       </footer>
     </div>
   );
