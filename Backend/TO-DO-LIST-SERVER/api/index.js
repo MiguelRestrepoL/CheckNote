@@ -95,74 +95,24 @@ async function initializeServices() {
 }
 
 // ========================================
-// CONFIGURACIÓN CORS ÚNICA Y LIMPIA
-// ========================================
-const allowedOrigins = [
-  'http://localhost:3000',
-  'http://127.0.0.1:3000',
-  'http://localhost:5173',
-  'https://check-note-fend.vercel.app',
-  'https://check-note-fend-7etgom6lz-miguels-projects-40b497cf.vercel.app',
-  'https://check-note-fend-git-main-miguels-projects-40b497cf.vercel.app',
-  process.env.FRONTEND_URL
-].filter(Boolean);
-
-console.log('🌐 Allowed CORS origins:', allowedOrigins);
-
-const corsOptions = {
-  origin: function (origin, callback) {
-    console.log('🔍 CORS - Checking origin:', origin);
-    
-    if (!origin) {
-      console.log('✅ CORS - Request without origin allowed');
-      return callback(null, true);
-    }
-    
-    const isAllowed = allowedOrigins.some(allowedOrigin => {
-      if (typeof allowedOrigin === 'string') {
-        return allowedOrigin === origin;
-      }
-      return false;
-    });
-    
-    const isVercelPattern = /^https:\/\/check-note-fend-[a-zA-Z0-9-]+\.vercel\.app$/.test(origin);
-    
-    if (isAllowed || isVercelPattern) {
-      console.log('✅ CORS - Origin allowed:', origin);
-      callback(null, true);
-    } else {
-      console.log('❌ CORS - Origin blocked:', origin);
-      callback(new Error(`Origin ${origin} not allowed by CORS policy`), false);
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: [
-    'Content-Type', 
-    'Authorization', 
-    'X-Requested-With',
-    'Accept',
-    'Origin',
-    'X-CSRF-Token',
-    'X-Api-Version',
-    'Cache-Control'
-  ],
-  exposedHeaders: ['X-Total-Count', 'X-Request-ID'],
-  optionsSuccessStatus: 200,
-  maxAge: 86400
-};
-
-// ========================================
 // MIDDLEWARES EN ORDEN CORRECTO
 // ========================================
 
-// 1. CORS - PRIMERO
-app.use(cors(corsOptions));
+// 1. CORS MANUAL - DEBE SER LO PRIMERO
+app.use(cors({
+  origin: [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://localhost:5173',
+    'https://check-note-fend.vercel.app',
+    process.env.FRONTEND_URL
+  ].filter(Boolean),
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
+}));
 
-// 2. Request ID único
-app.use(requestId);
-
-// 3. Parseo de JSON
+// 2. Parseo de JSON - TEMPRANO para que esté disponible
 app.use(express.json({ 
   limit: '10mb',
   verify: (req, res, buf) => {
@@ -231,6 +181,53 @@ app.use((req, res, next) => {
 
 // 8. Rate limiting
 app.use('/api', apiLimiter);
+
+
+// ========================================
+// CONFIGURACIÓN CORS MEJORADA PARA VERCEL
+// ========================================
+
+// Configuración CORS mejorada para múltiples entornos
+const allowedOrigins = [
+  'http://localhost:8080',
+  'http://127.0.0.1:3000',
+  'https://check-note-fend.vercel.app',
+  // Agregar todas las posibles URLs de Vercel de tu frontend
+  'check-note-fend-7etgom6lz-miguels-projects-40b497cf.vercel.app ', // Reemplaza 'tu-usuario' con tu username de GitHub
+  'check-note-fend-git-main-miguels-projects-40b497cf.vercel.app ', // Reemplaza 'tu-usuario' con tu username de GitHub
+  // También incluir cualquier subdomain de preview que Vercel genere
+  /^https:\/\/check-note-fend-[a-zA-Z0-9-]+\.vercel\.app$/,
+  process.env.FRONTEND_URL,
+].filter(Boolean); // Elimina valores undefined/null
+
+console.log('🌐 Allowed CORS origins:', allowedOrigins);
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Permitir requests sin origin (como aplicaciones móviles o Postman)
+    if (!origin) {
+      console.log('⚠️ Request without origin allowed (mobile app or API testing)');
+      return callback(null, true);
+    }
+    
+    // Verificar si el origin está en la lista de permitidos
+    const isAllowed = allowedOrigins.some(allowedOrigin => {
+      if (typeof allowedOrigin === 'string') {
+        return allowedOrigin === origin;
+      }
+      if (allowedOrigin instanceof RegExp) {
+        return allowedOrigin.test(origin);
+      }
+      return false;
+    });
+    
+    if (isAllowed) {
+      console.log('✅ CORS allowed for origin:', origin);
+      callback(null, true);
+    } else {
+      console.log('❌ CORS blocked for origin:', origin);
+      console.log('📋 Allowed origins:', allowedOrigins.map(o => o.toString()));
+      callback(new Error(`Origin ${origin} not allowed by CORS policy`), false);
 
 // 9. Detector de requests lentos
 app.use(slowRequestDetector(2000));
@@ -333,7 +330,7 @@ app.get('/health', (req, res) => {
   });
 });
 
-// API Health Check
+// AGREGAR: Health check para API v1
 app.get('/api/v1/health', (req, res) => {
   console.log('📋 Health check API v1 solicitado');
   
@@ -342,7 +339,7 @@ app.get('/api/v1/health', (req, res) => {
     message: 'API OK',
     timestamp: new Date().toISOString(),
     version: '1.5.0',
-    cors: 'enabled-clean-version',
+    cors: 'enabled-fixed-order',
     api: 'operational'
   };
   
@@ -352,7 +349,9 @@ app.get('/api/v1/health', (req, res) => {
   });
 });
 
-// Ruta principal
+// ========================================
+// RUTA PRINCIPAL MEJORADA - FASE 5
+// ========================================
 app.get('/', (req, res) => {
   const emailConfigured = EmailService.isConfigured === true;
   const emailSimulation = EmailService.isConfigured === 'simulation';
@@ -371,7 +370,7 @@ app.get('/', (req, res) => {
       security: '✅ Headers + Rate Limiting + Password Reset',
       email: emailConfigured ? '✅ Configurado (Resend)' : 
              emailSimulation ? '⚠️ Simulación (Desarrollo)' : '❌ No configurado',
-      cors: '✅ Configurado para Vercel - Limpio'
+      cors: '✅ Configurado para Vercel'
     },
     security: {
       rateLimiting: {
@@ -406,7 +405,9 @@ app.get('/', (req, res) => {
   });
 });
 
-// Rutas solo para desarrollo
+// ========================================
+// RUTA DE ESTADO DE SEGURIDAD - FASE 5 (solo desarrollo)
+// ========================================
 if (process.env.NODE_ENV === 'development') {
   app.get('/security-status', async (req, res) => {
     try {
@@ -448,6 +449,7 @@ if (process.env.NODE_ENV === 'development') {
     }
   });
 
+  // NUEVA RUTA: Probar envío de email
   app.post('/test-email', async (req, res) => {
     try {
       const { email } = req.body;
@@ -497,6 +499,8 @@ app.use('/api/v1', routes);
 // ========================================
 // MANEJO DE ERRORES
 // ========================================
+
+// Middleware de manejo de errores específicos de seguridad
 app.use((error, req, res, next) => {
   if (error.type === 'entity.parse.failed') {
     logger.error('JSON parse error', {
@@ -618,7 +622,7 @@ async function startServer() {
         port: PORT,
         environment: process.env.NODE_ENV || 'development',
         version: '1.5.0',
-        features: 'Auth + Users + Tasks + Error Handling + Logging + Advanced Security + Email + Clean CORS',
+        features: 'Auth + Users + Tasks + Error Handling + Logging + Advanced Security + Email + Enhanced CORS',
         timestamp: new Date().toISOString(),
         security: {
           rateLimiting: 'enabled',
@@ -650,13 +654,18 @@ async function startServer() {
       console.log('   ✅ Logging avanzado');
       console.log('   ✅ Rate Limiting inteligente');
       console.log('   ✅ Recuperación de contraseñas');
-      console.log('   ✅ CORS limpio sin duplicaciones');
+      console.log('   ✅ CORS manual + library en orden correcto');
       console.log(`   ${EmailService.isConfigured === true ? '✅' : EmailService.isConfigured === 'simulation' ? '⚠️' : '❌'} Servicio de email: ${emailStatus}`);
       
       logger.info(startMessage, details);
+      
+      // Iniciar trabajos de limpieza automática - FASE 5
       setupCleanupJobs();
     });
 
+    // ========================================
+    // MANEJO GRACEFUL SHUTDOWN MEJORADO - FASE 5
+    // ========================================
     const gracefulShutdown = (signal) => {
       console.log(`\n📴 Señal ${signal} recibida. Cerrando servidor gracefully...`);
       logger.info(`Server shutdown initiated`, { 
@@ -681,6 +690,7 @@ async function startServer() {
         }
       });
       
+      // Forzar cierre después de 15 segundos (más tiempo para limpieza)
       setTimeout(() => {
         console.error('❌ Forzando cierre del servidor');
         logger.error('Forcing server shutdown after timeout');
