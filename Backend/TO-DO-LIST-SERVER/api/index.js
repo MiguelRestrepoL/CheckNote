@@ -105,6 +105,38 @@ async function initializeServices() {
 // MIDDLEWARES DE SEGURIDAD Y LOGGING
 // ========================================
 
+// TEMPORAL: Forzar headers CORS manualmente (ANTES de otros middlewares)
+app.use((req, res, next) => {
+  const origin = req.get('Origin');
+  const allowedOrigins = [
+    'https://check-note-fend.vercel.app',
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'http://127.0.0.1:3000'
+  ];
+  
+  console.log('🔍 CORS Manual - Origin recibido:', origin);
+  console.log('🔍 CORS Manual - Method:', req.method);
+  console.log('🔍 CORS Manual - Path:', req.path);
+  
+  if (allowedOrigins.includes(origin) || !origin) {
+    console.log('✅ CORS Manual - Permitiendo origin:', origin || 'no-origin');
+    res.header('Access-Control-Allow-Origin', origin || '*');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
+  } else {
+    console.log('❌ CORS Manual - Bloqueando origin:', origin);
+  }
+  
+  if (req.method === 'OPTIONS') {
+    console.log('🔄 CORS Manual - Respondiendo a preflight OPTIONS');
+    return res.sendStatus(200);
+  }
+  
+  next();
+});
+
 // Headers de seguridad (tu implementación existente + mejoras FASE 5)
 app.use((req, res, next) => {
   // Headers de seguridad existentes
@@ -158,24 +190,33 @@ app.use((req, res, next) => {
 app.use(slowRequestDetector(2000));
 
 // CORS con configuración mejorada - FASE 5
-// Configuración CORS mejorada para múltiples entornos
-const allowedOrigins = [
-  'http://localhost:3000',
-  'http://127.0.0.1:3000',
-  'http://localhost:5173', // Para Vite
-  'https://check-note-fend.vercel.app', // Tu dominio exacto
-  process.env.FRONTEND_URL,
-  // Agregar otras URLs de frontend si es necesario
-].filter(Boolean); // Elimina valores undefined
-
 app.use(cors({
-  origin: [
-    'http://localhost:3000', 
-    'http://127.0.0.1:3000',
-    'http://localhost:5173', // Para Vite
-    'https://check-note-fend.vercel.app', // Tu dominio exacto
-    process.env.FRONTEND_URL
-  ].filter(Boolean),
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      'http://localhost:3000', 
+      'http://127.0.0.1:3000',
+      'http://localhost:5173',
+      'https://check-note-fend.vercel.app',
+      process.env.FRONTEND_URL
+    ].filter(Boolean);
+    
+    console.log('🔍 CORS Library - Origin:', origin);
+    console.log('🔍 CORS Library - Allowed:', allowedOrigins);
+    
+    // Permitir requests sin origin en desarrollo
+    if (!origin) {
+      console.log('✅ CORS Library - Sin origin, permitiendo');
+      return callback(null, true);
+    }
+    
+    if (allowedOrigins.includes(origin)) {
+      console.log('✅ CORS Library - Origin permitido:', origin);
+      callback(null, true);
+    } else {
+      console.log('❌ CORS Library - Origin bloqueado:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
@@ -246,6 +287,25 @@ app.get('/health', (req, res) => {
     requestId: req.requestId,
     emailService: healthCheck.security.emailService
   });
+  
+  res.status(200).json({
+    success: true,
+    data: healthCheck
+  });
+});
+
+// AGREGAR: Health check para API v1 (ANTES de startServer)
+app.get('/api/v1/health', (req, res) => {
+  console.log('📋 Health check API v1 solicitado');
+  
+  const healthCheck = {
+    uptime: process.uptime(),
+    message: 'API OK',
+    timestamp: new Date().toISOString(),
+    version: '1.5.0',
+    cors: 'enabled',
+    api: 'operational'
+  };
   
   res.status(200).json({
     success: true,
@@ -520,6 +580,7 @@ async function startServer() {
       console.log(`🌐 Servidor disponible en: http://localhost:${PORT}`);
       console.log(`📖 Documentación Swagger: http://localhost:${PORT}/api-docs`);
       console.log(`📋 Health Check: http://localhost:${PORT}/health`);
+      console.log(`📋 API Health Check: http://localhost:${PORT}/api/v1/health`);
       console.log(`🔒 Security Status: http://localhost:${PORT}/security-status`);
       if (process.env.NODE_ENV === 'development') {
         console.log(`📧 Test Email: POST http://localhost:${PORT}/test-email`);
@@ -532,6 +593,7 @@ async function startServer() {
       console.log('   ✅ Logging avanzado');
       console.log('   ✅ Rate Limiting inteligente');
       console.log('   ✅ Recuperación de contraseñas');
+      console.log('   ✅ CORS manual + library configurado');
       console.log(`   ${EmailService.isConfigured === true ? '✅' : EmailService.isConfigured === 'simulation' ? '⚠️' : '❌'} Servicio de email: ${emailStatus}`);
       
       logger.info(startMessage, details);
@@ -612,20 +674,6 @@ process.on('unhandledRejection', (reason, promise) => {
   });
   console.error('💥 Promise rechazada no manejada:', reason);
   process.exit(1);
-});
-
-app.get('/api/v1/health', (req, res) => {
-  const healthCheck = {
-    uptime: process.uptime(),
-    message: 'API OK',
-    timestamp: new Date().toISOString(),
-    version: '1.5.0'
-  };
-  
-  res.status(200).json({
-    success: true,
-    data: healthCheck
-  });
 });
 
 // INICIAR LA APLICACIÓN
