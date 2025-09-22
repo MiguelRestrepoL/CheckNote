@@ -102,26 +102,83 @@ async function initializeServices() {
 }
 
 // ========================================
+// CONFIGURACIÓN CORS LIMPIA Y CORREGIDA
+// ========================================
+
+// Configuración CORS mejorada para múltiples entornos
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'http://localhost:5173',
+  'https://check-note-fend.vercel.app',
+  'https://check-note-fend-7etgom6lz-miguels-projects-40b497cf.vercel.app',
+  'https://check-note-fend-git-main-miguels-projects-40b497cf.vercel.app',
+  process.env.FRONTEND_URL
+].filter(Boolean); // Elimina valores undefined/null
+
+console.log('🌐 Allowed CORS origins:', allowedOrigins);
+
+// CORS Configuration
+const corsOptions = {
+  origin: function (origin, callback) {
+    console.log('🔍 CORS - Checking origin:', origin);
+    
+    // Permitir requests sin origin (como aplicaciones móviles o Postman)
+    if (!origin) {
+      console.log('✅ CORS - Request without origin allowed');
+      return callback(null, true);
+    }
+    
+    // Verificar si el origin está en la lista de permitidos
+    const isAllowed = allowedOrigins.some(allowedOrigin => {
+      if (typeof allowedOrigin === 'string') {
+        return allowedOrigin === origin;
+      }
+      return false;
+    });
+    
+    // También verificar patrones de Vercel
+    const isVercelPattern = /^https:\/\/check-note-fend-[a-zA-Z0-9-]+\.vercel\.app$/.test(origin);
+    
+    if (isAllowed || isVercelPattern) {
+      console.log('✅ CORS - Origin allowed:', origin);
+      callback(null, true);
+    } else {
+      console.log('❌ CORS - Origin blocked:', origin);
+      console.log('📋 CORS - Allowed origins:', allowedOrigins);
+      callback(new Error(`Origin ${origin} not allowed by CORS policy`), false);
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: [
+    'Content-Type', 
+    'Authorization', 
+    'X-Requested-With',
+    'Accept',
+    'Origin',
+    'X-CSRF-Token',
+    'X-Api-Version',
+    'Cache-Control'
+  ],
+  exposedHeaders: ['X-Total-Count', 'X-Request-ID'],
+  optionsSuccessStatus: 200,
+  maxAge: 86400 // Cache preflight por 24 horas
+};
+
+// ========================================
 // MIDDLEWARES EN ORDEN CORRECTO
 // ========================================
 
-// 1. CORS MANUAL - DEBE SER LO PRIMERO
-app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-    'http://localhost:5173',
-    'https://check-note-fend.vercel.app',
-    process.env.FRONTEND_URL
-  ].filter(Boolean),
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
-}));
+// 1. CORS - DEBE SER LO PRIMERO
+app.use(cors(corsOptions));
 
-// 2. Parseo de JSON - TEMPRANO para que esté disponible
+// 2. Request ID único
+app.use(requestId);
+
+// 3. Parseo de JSON
 app.use(express.json({ 
-  limit: '10mb',        
+  limit: '10mb',
   verify: (req, res, buf) => {
     try {
       JSON.parse(buf);
@@ -146,9 +203,6 @@ app.use(express.json({
 
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// 3. Request ID único
-app.use(requestId);
-
 // 4. Headers de seguridad
 app.use((req, res, next) => {
   // Headers de seguridad existentes
@@ -171,7 +225,7 @@ app.use(responseTime);
 // 6. Logging de requests
 app.use(requestLogger);
 
-// 7. FASE 5: Logging avanzado de eventos de seguridad
+// 7. Logging avanzado de eventos de seguridad
 app.use((req, res, next) => {
   const timestamp = new Date().toISOString();
   const ip = req.ip || req.connection.remoteAddress;
@@ -192,8 +246,9 @@ app.use((req, res, next) => {
   next();
 });
 
-// 8. Rate limiting - DESPUÉS del CORS
+// 8. Rate limiting
 app.use('/api', apiLimiter);
+
 
 // ========================================
 // CONFIGURACIÓN CORS MEJORADA PARA VERCEL
@@ -240,64 +295,13 @@ const corsOptions = {
       console.log('❌ CORS blocked for origin:', origin);
       console.log('📋 Allowed origins:', allowedOrigins.map(o => o.toString()));
       callback(new Error(`Origin ${origin} not allowed by CORS policy`), false);
-=======
+
+
 // 9. Detector de requests lentos
 app.use(slowRequestDetector(2000));
 
-// 10. CORS con librería (como backup)
-app.use(cors({
-  origin: function (origin, callback) {
-    const allowedOrigins = [
-      'http://localhost:3000', 
-      'http://127.0.0.1:3000',
-      'http://localhost:5173',
-      'https://check-note-fend.vercel.app',
-      process.env.FRONTEND_URL
-    ].filter(Boolean);
-    
-    console.log('🔍 CORS Library - Origin:', origin);
-    console.log('🔍 CORS Library - Allowed:', allowedOrigins);
-    
-    // Permitir requests sin origin en desarrollo
-    if (!origin) {
-      console.log('✅ CORS Library - Sin origin, permitiendo');
-      return callback(null, true);
-    }
-    
-    if (allowedOrigins.includes(origin)) {
-      console.log('✅ CORS Library - Origin permitido:', origin);
-      callback(null, true);
-    } else {
-      console.log('❌ CORS Library - Origin bloqueado:', origin);
-      callback(new Error('Not allowed by CORS'));
-
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-
-  allowedHeaders: [
-    'Content-Type', 
-    'Authorization', 
-    'X-Requested-With',
-    'Accept',
-    'Origin',
-    'X-CSRF-Token',
-    'X-Api-Version',
-    'Cache-Control'
-  ],
-  exposedHeaders: ['X-Total-Count', 'X-Request-ID'], // Si necesitas exponer headers personalizados
-  optionsSuccessStatus: 200,
-  maxAge: 86400 // Cache preflight por 24 horas
-};
-
-app.use(cors(corsOptions));
-
-// ========================================
-// MIDDLEWARE ADICIONAL PARA DEBUGGING CORS
-// ========================================
+// 10. Middleware adicional para debugging CORS
 app.use((req, res, next) => {
-  // Log detallado para requests de frontend
   const origin = req.headers.origin;
   const method = req.method;
   const path = req.path;
@@ -318,11 +322,6 @@ app.use((req, res, next) => {
   
   next();
 });
-
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-  optionsSuccessStatus: 200
-}));
-
 
 // 11. Logging del body de requests (solo desarrollo)
 app.use(requestBodyLogger);
@@ -400,7 +399,7 @@ app.get('/health', (req, res) => {
   });
 });
 
-// AGREGAR: Health check para API v1
+// Health check para API v1
 app.get('/api/v1/health', (req, res) => {
   console.log('📋 Health check API v1 solicitado');
   
@@ -409,7 +408,7 @@ app.get('/api/v1/health', (req, res) => {
     message: 'API OK',
     timestamp: new Date().toISOString(),
     version: '1.5.0',
-    cors: 'enabled-fixed-order',
+    cors: 'enabled-fixed-syntax',
     api: 'operational'
   };
   
@@ -420,7 +419,7 @@ app.get('/api/v1/health', (req, res) => {
 });
 
 // ========================================
-// RUTA PRINCIPAL MEJORADA - FASE 5
+// RUTA PRINCIPAL MEJORADA
 // ========================================
 app.get('/', (req, res) => {
   const emailConfigured = EmailService.isConfigured === true;
@@ -440,7 +439,7 @@ app.get('/', (req, res) => {
       security: '✅ Headers + Rate Limiting + Password Reset',
       email: emailConfigured ? '✅ Configurado (Resend)' : 
              emailSimulation ? '⚠️ Simulación (Desarrollo)' : '❌ No configurado',
-      cors: '✅ Configurado para Vercel'
+      cors: '✅ Configurado para Vercel - Sintaxis Corregida'
     },
     security: {
       rateLimiting: {
@@ -476,7 +475,7 @@ app.get('/', (req, res) => {
 });
 
 // ========================================
-// RUTA DE ESTADO DE SEGURIDAD - FASE 5 (solo desarrollo)
+// RUTA DE ESTADO DE SEGURIDAD (solo desarrollo)
 // ========================================
 if (process.env.NODE_ENV === 'development') {
   app.get('/security-status', async (req, res) => {
@@ -519,7 +518,7 @@ if (process.env.NODE_ENV === 'development') {
     }
   });
 
-  // NUEVA RUTA: Probar envío de email
+  // Ruta para probar envío de email
   app.post('/test-email', async (req, res) => {
     try {
       const { email } = req.body;
@@ -567,10 +566,10 @@ if (process.env.NODE_ENV === 'development') {
 app.use('/api/v1', routes);
 
 // ========================================
-// MANEJO DE ERRORES MEJORADO - FASE 5
+// MANEJO DE ERRORES
 // ========================================
 
-// Middleware de manejo de errores específicos de seguridad
+// Middleware de manejo de errores específicos
 app.use((error, req, res, next) => {
   // Error de JSON malformado
   if (error.type === 'entity.parse.failed') {
@@ -650,7 +649,7 @@ app.use(notFoundHandler);
 app.use(globalErrorHandler);
 
 // ========================================
-// CONFIGURACIÓN DE LIMPIEZA AUTOMÁTICA - FASE 5
+// CONFIGURACIÓN DE LIMPIEZA AUTOMÁTICA
 // ========================================
 const setupCleanupJobs = () => {
   // Limpiar datos de seguridad cada 30 minutos
@@ -686,7 +685,7 @@ const setupCleanupJobs = () => {
 };
 
 // ========================================
-// INICIO DEL SERVIDOR MEJORADO
+// INICIO DEL SERVIDOR
 // ========================================
 async function startServer() {
   try {
@@ -702,7 +701,7 @@ async function startServer() {
         port: PORT,
         environment: process.env.NODE_ENV || 'development',
         version: '1.5.0',
-        features: 'Auth + Users + Tasks + Error Handling + Logging + Advanced Security + Email + Enhanced CORS',
+        features: 'Auth + Users + Tasks + Error Handling + Logging + Advanced Security + Email + Fixed CORS',
         timestamp: new Date().toISOString(),
         security: {
           rateLimiting: 'enabled',
@@ -716,11 +715,8 @@ async function startServer() {
       console.log(`🌐 Servidor disponible en: http://localhost:${PORT}`);
       console.log(`📖 Documentación Swagger: http://localhost:${PORT}/api-docs`);
       console.log(`📋 Health Check: http://localhost:${PORT}/health`);
-
       console.log(`🧪 CORS Test: http://localhost:${PORT}/cors-test`);
-
       console.log(`📋 API Health Check: http://localhost:${PORT}/api/v1/health`);
-
       console.log(`🔒 Security Status: http://localhost:${PORT}/security-status`);
       if (process.env.NODE_ENV === 'development') {
         console.log(`📧 Test Email: POST http://localhost:${PORT}/test-email`);
@@ -737,18 +733,17 @@ async function startServer() {
       console.log('   ✅ Logging avanzado');
       console.log('   ✅ Rate Limiting inteligente');
       console.log('   ✅ Recuperación de contraseñas');
-      console.log('   ✅ CORS manual + library en orden correcto');
+      console.log('   ✅ CORS corregido y limpio');
       console.log(`   ${EmailService.isConfigured === true ? '✅' : EmailService.isConfigured === 'simulation' ? '⚠️' : '❌'} Servicio de email: ${emailStatus}`);
-      console.log('   ✅ CORS mejorado para Vercel');
       
       logger.info(startMessage, details);
       
-      // Iniciar trabajos de limpieza automática - FASE 5
+      // Iniciar trabajos de limpieza automática
       setupCleanupJobs();
     });
 
     // ========================================
-    // MANEJO GRACEFUL SHUTDOWN MEJORADO - FASE 5
+    // MANEJO GRACEFUL SHUTDOWN
     // ========================================
     const gracefulShutdown = (signal) => {
       console.log(`\n📴 Señal ${signal} recibida. Cerrando servidor gracefully...`);
@@ -775,7 +770,7 @@ async function startServer() {
         }
       });
       
-      // Forzar cierre después de 15 segundos (más tiempo para limpieza)
+      // Forzar cierre después de 15 segundos
       setTimeout(() => {
         console.error('❌ Forzando cierre del servidor');
         logger.error('Forcing server shutdown after timeout');
@@ -799,7 +794,7 @@ async function startServer() {
 }
 
 // ========================================
-// MANEJO DE ERRORES NO CAPTURADOS MEJORADO
+// MANEJO DE ERRORES NO CAPTURADOS
 // ========================================
 process.on('uncaughtException', (error) => {
   logger.error('Uncaught Exception', { 
