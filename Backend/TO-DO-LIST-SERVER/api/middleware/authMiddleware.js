@@ -47,13 +47,19 @@ const authenticateToken = async (req, res, next) => {
       });
     }
 
-    // Añadir usuario al request para uso en controladores
+    // CORREGIDO: Añadir usuario al request para uso en controladores
     req.user = {
-      id: user._id,
+      _id: user._id,        // ← AGREGADO: Lo que busca TaskController
+      id: user._id,         // ← MANTENIDO: Para compatibilidad con otros controladores
       correo: user.correo,
       nombres: user.nombres,
       apellidos: user.apellidos
     };
+
+    console.log('Usuario autenticado correctamente:', {
+      _id: req.user._id,
+      correo: req.user.correo
+    });
 
     next();
 
