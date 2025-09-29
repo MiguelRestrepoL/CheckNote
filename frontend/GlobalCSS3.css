@@ -90,9 +90,9 @@ body {
   --warning: #f59e0b;
   --info: #3b82f6;
   
-  /* Anchos máximos para campos - TODOS A 800PX */
-  --input-width-sm: 800px;
-  --input-width-md: 800px;
+  /* Anchos máximos para campos - Desktop ocupa más */
+  --input-width-sm: 600px;
+  --input-width-md: 700px;
   --input-width-lg: 800px;
 }
 
@@ -340,7 +340,7 @@ body {
 }
 
 /* ============================================
-   FORMULARIOS - SISTEMA MEJORADO CON LABELS QUE COINCIDEN CON INPUTS
+   FORMULARIOS - SISTEMA MEJORADO
    ============================================ */
 .form-container {
   display: flex;
@@ -356,10 +356,9 @@ body {
   gap: var(--spacing-sm);
   width: 100%;
   position: relative;
-  align-items: flex-start; /* Esto es clave para que los labels se alineen con los inputs */
+  align-items: flex-start;
 }
 
-/* LABELS Y INPUTS - AMBOS OCUPAN 100% DEL CONTENEDOR */
 .form-label {
   background: var(--form-label-bg);
   color: var(--text-dark);
@@ -373,10 +372,7 @@ body {
   margin-bottom: 4px;
   display: block;
   position: relative;
-  /* FORZAR A OCUPAR TODO EL ANCHO DEL CONTENEDOR */
-  width: 100% !important;
-  max-width: none !important;
-  min-width: 100% !important;
+  width: 100%;
 }
 
 .form-input {
@@ -390,10 +386,7 @@ body {
   transition: all var(--transition);
   box-sizing: border-box;
   display: block;
-  /* FORZAR A OCUPAR TODO EL ANCHO DEL CONTENEDOR */
-  width: 100% !important;
-  max-width: none !important;
-  min-width: 100% !important;
+  width: 100%;
 }
 
 .form-input:focus {
@@ -412,15 +405,7 @@ body {
   color: rgba(255,255,255,0.5);
 }
 
-/* FORM-FIELD: el contenedor que controla el ancho total */
-.form-field {
-  width: 100%;
-  display: flex !important;
-  flex-direction: column !important;
-  gap: var(--spacing-sm);
-}
-
-/* Contenedores con diferentes anchos - ESTOS definen el espacio total */
+/* Contenedores con diferentes anchos */
 .form-field.field-sm {
   max-width: var(--input-width-sm);
   width: var(--input-width-sm);
@@ -432,22 +417,6 @@ body {
 }
 
 .form-field.field-lg {
-  max-width: var(--input-width-lg);
-  width: var(--input-width-lg);
-}
-
-/* Mantener compatibilidad con las clases en los inputs */
-.form-field:has(.form-input.width-sm) {
-  max-width: var(--input-width-sm);
-  width: var(--input-width-sm);
-}
-
-.form-field:has(.form-input.width-md) {
-  max-width: var(--input-width-md);
-  width: var(--input-width-md);
-}
-
-.form-field:has(.form-input.width-lg) {
   max-width: var(--input-width-lg);
   width: var(--input-width-lg);
 }
@@ -604,20 +573,20 @@ body {
    ============================================ */
 #section-personal,
 #section-cuenta,
-#section-manejo {
+#section-seguridad {
   width: 100%;
   display: block;
 }
 
 #section-personal.hidden,
 #section-cuenta.hidden,
-#section-manejo.hidden {
+#section-seguridad.hidden {
   display: none;
 }
 
 #section-personal:not(.hidden),
 #section-cuenta:not(.hidden),
-#section-manejo:not(.hidden) {
+#section-seguridad:not(.hidden) {
   display: block;
   opacity: 1;
   visibility: visible;
@@ -656,20 +625,23 @@ body {
 }
 
 /* ============================================
-   RESPONSIVE PARA PERFIL
+   RESPONSIVE - TABLET
    ============================================ */
 @media (max-width: 768px) {
   .profile-container {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
     gap: var(--spacing-lg);
   }
   
   .profile-sidebar {
-    order: 2;
+    order: 1;
+    width: 100%;
   }
   
   .profile-content {
-    order: 1;
+    order: 2;
+    width: 100%;
   }
   
   .brand-logo {
@@ -693,23 +665,6 @@ body {
     margin-left: var(--spacing-lg);
   }
   
-  /* En móvil, los inputs y labels ocupan todo el ancho */
-  .form-input.width-sm,
-  .form-input.width-md,
-  .form-input.width-lg,
-  .form-field:has(.form-input.width-sm) .form-label,
-  .form-field:has(.form-input.width-md) .form-label,
-  .form-field:has(.form-input.width-lg) .form-label,
-  .form-field.field-sm .form-label,
-  .form-field.field-md .form-label,
-  .form-field.field-lg .form-label,
-  .form-field.field-sm .form-input,
-  .form-field.field-md .form-input,
-  .form-field.field-lg .form-input {
-    max-width: none;
-    width: 100%;
-  }
-  
   .topbar {
     padding: 14px var(--spacing-lg);
   }
@@ -720,6 +675,9 @@ body {
   }
 }
 
+/* ============================================
+   RESPONSIVE - MÓVIL
+   ============================================ */
 @media (max-width: 600px) {
   .topbar { 
     grid-template-columns: 1fr; 
@@ -746,6 +704,33 @@ body {
     max-width: 360px; 
   }
   
+  /* FIX: Forzar inputs a ser responsive */
+  .form-input,
+  .form-textarea,
+  .form-select,
+  .form-label {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+  
+  .form-field,
+  .form-field.field-md,
+  .form-field.field-sm,
+  .form-field.field-lg {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+  
+  .form-container {
+    padding: var(--spacing-md);
+    max-width: 100% !important;
+  }
+  
+  .profile-content {
+    padding: var(--spacing-md) !important;
+    width: 100% !important;
+  }
+  
   .main {
     padding: var(--spacing-xl) var(--spacing-sm);
   }
@@ -756,7 +741,8 @@ body {
   
   .task-card {
     padding: var(--spacing-lg);
-    max-width: 95%;
+    max-width: 100% !important;
+    width: 100% !important;
   }
   
   .task-title {
@@ -764,6 +750,9 @@ body {
   }
 }
 
+/* ============================================
+   RESPONSIVE - MÓVIL PEQUEÑO
+   ============================================ */
 @media (max-width: 480px) {
   .profile-content {
     min-height: auto;
