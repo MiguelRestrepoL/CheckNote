@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro - CheckNote</title>
+    <link rel="stylesheet" href="./GlobalCSS1.css">
+</head>
+<body>
+    <div class="main-container gradient-bg">
+        <div class="two-column-layout">
+            <!-- Columna izquierda - Info -->
+            <div class="info-column">
+                <div class="logo size-xl">
+                    <img src="/logo.png" alt="Checknote Logo" />
+                </div>
+                <p>Organízate más fácil que nunca</p>
+            </div>
+
+            <!-- Columna derecha - Formulario -->
+            <div class="card register-style with-shadow">
+                <h2 class="title-primary">Crear cuenta</h2>
+                
+                <form class="form spaced" id="registroForm">
+                    <!-- Nombres -->
+                    <div class="field-group">
+                        <img src="/usuario.png" alt="Nombre" class="field-icon" />
+                        <div class="field-input">
+                            <label>Nombres</label>
+                            <input
+                                type="text"
+                                id="nombres"
+                                placeholder="Ingrese su nombre"
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    <!-- Apellidos -->
+                    <div class="field-group">
+                        <div class="field-icon empty"></div>
+                        <div class="field-input">
+                            <label>Apellido</label>
+                            <input
+                                type="text"
+                                id="apellidos"
+                                placeholder="Ingrese su apellido"
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    <!-- Edad -->
+                    <div class="field-group">
+                        <img src="/edad.png" alt="Edad" class="field-icon" />
+                        <div class="field-input">
+                            <label>Edad</label>
+                            <input
+                                type="number"
+                                id="edad"
+                                placeholder="Ingrese su edad"
+                                min="13"
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="field-group">
+                        <img src="/correo.png" alt="Email" class="field-icon" />
+                        <div class="field-input">
+                            <label>E-mail</label>
+                            <input
+                                type="email"
+                                id="correo"
+                                placeholder="Ingrese su correo"
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    <!-- Contraseña -->
+                    <div class="field-group">
+                        <img src="/clave.png" alt="Contraseña" class="field-icon" />
+                        <div class="field-input">
+                            <label>Contraseña</label>
+                            <input
+                                type="password"
+                                id="contrasena"
+                                placeholder="Ingrese su contraseña"
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    <!-- Confirmar Contraseña -->
+                    <div class="field-group">
+                        <div class="field-icon empty"></div>
+                        <div class="field-input">
+                            <label>Confirme su contraseña</label>
+                            <input
+                                type="password"
+                                id="confirmarContrasena"
+                                placeholder="Repita su contraseña"
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    <!-- Checkbox términos -->
+                    <div class="checkbox-group">
+                        <input
+                            type="checkbox"
+                            id="terms"
+                            required
+                        />
+                        <label for="terms">Estoy de acuerdo con los términos y condiciones</label>
+                    </div>
+
+                    <!-- Mensaje de error -->
+                    <div id="errorMessage" class="text-error" style="display: none;"></div>
+
+                    <!-- Botón Registrar -->
+                    <button type="submit" class="btn btn-primary btn-rounded" id="submitBtn">
+                        <span id="btnText">Registrarse</span>
+                        <span id="loadingSpinner" class="loading" style="display: none;"></span>
+                    </button>
+                </form>
+
+                <!-- Links -->
+                <div class="links-section">
+                    <a href="#" class="link small">Condiciones de uso</a> | 
+                    <a href="#" class="link small">Términos y servicios</a>
+                </div>
+
+                <!-- Link para ir al login -->
+                <div class="links-section">
+                    ¿Ya tiene cuenta? <a href="/login.html" class="link">Inicie sesión</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variables para manejar el estado del formulario
+        let isLoading = false;
+
+        // Elementos del DOM
+        const form = document.getElementById('registroForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const btnText = document.getElementById('btnText');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const errorMessage = document.getElementById('errorMessage');
+
+        // Campos del formulario
+        const nombres = document.getElementById('nombres');
+        const apellidos = document.getElementById('apellidos');
+        const edad = document.getElementById('edad');
+        const correo = document.getElementById('correo');
+        const contrasena = document.getElementById('contrasena');
+        const confirmarContrasena = document.getElementById('confirmarContrasena');
+        const terms = document.getElementById('terms');
+
+        // Función para mostrar errores
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            
+            // Scroll al error si es necesario
+            errorMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        // Función para ocultar errores
+        function hideError() {
+            errorMessage.style.display = 'none';
+        }
+
+        // Función para validar contraseña
+        function validatePassword(password) {
+            const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
+            return passwordRegex.test(password);
+        }
+
+        // Función para manejar el estado de carga
+        function setLoading(loading) {
+            isLoading = loading;
+            
+            if (loading) {
+                submitBtn.disabled = true;
+                btnText.style.display = 'none';
+                loadingSpinner.style.display = 'inline-block';
+                submitBtn.style.opacity = '0.7';
+            } else {
+                submitBtn.disabled = false;
+                btnText.style.display = 'inline';
+                loadingSpinner.style.display = 'none';
+                submitBtn.style.opacity = '1';
+            }
+        }
+
+        // Función para realizar el registro
+        async function handleRegistro(formData) {
+            try {
+                const response = await fetch('https://checknote-27fe.onrender.com/api/v1/users/registro/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Error en el registro. Inténtalo de nuevo.');
+                }
+
+                // Registro exitoso - redirigir al login con mensaje de éxito
+                // Almacenar mensaje de éxito temporalmente
+                sessionStorage.setItem('registroExitoso', '¡Registro exitoso! Por favor, inicia sesión.');
+                window.location.href = '/login.html';
+
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        // Event listener para el formulario
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Limpiar errores previos
+            hideError();
+
+            // Si ya está cargando, no hacer nada
+            if (isLoading) return;
+
+            // Obtener valores del formulario
+            const nombresValue = nombres.value.trim();
+            const apellidosValue = apellidos.value.trim();
+            const edadValue = parseInt(edad.value, 10);
+            const correoValue = correo.value.trim();
+            const contrasenaValue = contrasena.value;
+            const confirmarContrasenaValue = confirmarContrasena.value;
+            const termsValue = terms.checked;
+
+            // Validaciones del lado del cliente
+            if (contrasenaValue !== confirmarContrasenaValue) {
+                showError('Las contraseñas no coinciden.');
+                return;
+            }
+
+            if (!validatePassword(contrasenaValue)) {
+                showError('La contraseña debe contener al menos 8 caracteres, 1 mayúscula, 1 número y 1 carácter especial.');
+                return;
+            }
+
+            if (!termsValue) {
+                showError('Debes aceptar los términos y condiciones.');
+                return;
+            }
+
+            // Preparar datos para envío
+            const formData = {
+                nombres: nombresValue,
+                apellidos: apellidosValue,
+                edad: edadValue,
+                correo: correoValue,
+                contrasena: contrasenaValue,
+                confirmarContrasena: confirmarContrasenaValue
+            };
+
+            // Activar estado de carga
+            setLoading(true);
+
+            // Realizar registro
+            try {
+                await handleRegistro(formData);
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        // Limpiar errores cuando el usuario comience a escribir
+        [nombres, apellidos, edad, correo, contrasena, confirmarContrasena, terms].forEach(field => {
+            field.addEventListener('input', hideError);
+            field.addEventListener('change', hideError);
+        });
+
+        // Validación en tiempo real de confirmación de contraseña
+        confirmarContrasena.addEventListener('input', () => {
+            if (contrasena.value && confirmarContrasena.value) {
+                if (contrasena.value !== confirmarContrasena.value) {
+                    confirmarContrasena.setCustomValidity('Las contraseñas no coinciden');
+                } else {
+                    confirmarContrasena.setCustomValidity('');
+                }
+            }
+        });
+
+        // Validación en tiempo real de la contraseña
+        contrasena.addEventListener('input', () => {
+            const password = contrasena.value;
+            if (password && !validatePassword(password)) {
+                contrasena.setCustomValidity('La contraseña debe contener al menos 8 caracteres, 1 mayúscula, 1 número y 1 carácter especial');
+            } else {
+                contrasena.setCustomValidity('');
+            }
+            
+            // También validar confirmación si ya tiene valor
+            if (confirmarContrasena.value) {
+                if (password !== confirmarContrasena.value) {
+                    confirmarContrasena.setCustomValidity('Las contraseñas no coinciden');
+                } else {
+                    confirmarContrasena.setCustomValidity('');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

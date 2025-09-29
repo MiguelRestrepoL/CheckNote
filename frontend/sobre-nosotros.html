@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sobre Nosotros - CheckNote</title>
+    <link rel="stylesheet" href="GlobalCSS1.css">
+    <style>
+        /* Estilos específicos para Sobre Nosotros */
+        .about-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: var(--spacing-4xl) var(--spacing-lg);
+        }
+
+        .hero-section {
+            text-align: center;
+            margin-bottom: var(--spacing-4xl);
+            padding: var(--spacing-4xl) 0;
+        }
+
+        .hero-title {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: var(--spacing-lg);
+            font-weight: 700;
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: var(--spacing-3xl);
+            margin-bottom: var(--spacing-4xl);
+        }
+
+        .content-card {
+            background: var(--card-bg);
+            padding: var(--spacing-3xl);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-card);
+            transition: transform var(--transition);
+        }
+
+        .content-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: var(--spacing-lg);
+            font-size: 24px;
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-md);
+            font-weight: 600;
+        }
+
+        .card-description {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .stats-section {
+            background: var(--card-bg-2);
+            padding: var(--spacing-4xl);
+            border-radius: var(--radius-xl);
+            margin-bottom: var(--spacing-4xl);
+            text-align: center;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: var(--spacing-3xl);
+            margin-top: var(--spacing-3xl);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            color: var(--primary);
+            font-weight: 700;
+            display: block;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .team-section {
+            text-align: center;
+            margin-bottom: var(--spacing-4xl);
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-lg);
+            font-weight: 600;
+        }
+
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: var(--spacing-3xl);
+            margin-top: var(--spacing-3xl);
+        }
+
+        .team-member {
+            background: var(--card-bg);
+            padding: var(--spacing-3xl);
+            border-radius: var(--radius-xl);
+            text-align: center;
+            transition: transform var(--transition);
+        }
+
+        .team-member:hover {
+            transform: translateY(-5px);
+        }
+
+        .member-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            margin: 0 auto var(--spacing-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: white;
+            font-weight: 700;
+            overflow: hidden;
+            border: 3px solid var(--primary);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .member-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        /* Fallback para cuando no hay imagen */
+        .member-avatar:not(:has(img)) {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+        }
+
+        .member-name {
+            font-size: 1.25rem;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-sm);
+            font-weight: 600;
+        }
+
+        .member-role {
+            color: var(--primary);
+            font-weight: 500;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .member-description {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        /* Breadcrumb Navigation - Heurística #3: Control y libertad del usuario */
+        .breadcrumb {
+            background: var(--card-bg);
+            padding: var(--spacing-md) var(--spacing-lg);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--spacing-3xl);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            font-size: 0.9rem;
+        }
+
+        .breadcrumb a {
+            color: var(--primary);
+            text-decoration: none;
+            transition: opacity var(--transition);
+        }
+
+        .breadcrumb a:hover {
+            opacity: 0.8;
+        }
+
+        .breadcrumb-separator {
+            color: var(--text-secondary);
+        }
+
+        .breadcrumb-current {
+            color: var(--text-secondary);
+        }
+
+        /* Progress indicator - Heurística #1: Visibilidad del sistema */
+        .page-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: rgba(16, 185, 129, 0.2);
+            z-index: 1000;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--primary);
+            transition: width 0.2s ease;
+            width: 0%;
+        }
+
+        /* Contact CTA - Heurística #6: Reconocimiento en lugar de recuerdo */
+        .contact-cta {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            padding: var(--spacing-4xl);
+            border-radius: var(--radius-xl);
+            text-align: center;
+            color: white;
+            margin-top: var(--spacing-4xl);
+        }
+
+        .cta-title {
+            font-size: 2rem;
+            margin-bottom: var(--spacing-lg);
+            font-weight: 600;
+        }
+
+        .cta-description {
+            font-size: 1.125rem;
+            margin-bottom: var(--spacing-3xl);
+            opacity: 0.9;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: var(--spacing-lg);
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-white {
+            background: white;
+            color: var(--primary);
+            padding: var(--spacing-lg) var(--spacing-3xl);
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform var(--transition);
+        }
+
+        .btn-white:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: white;
+            border: 2px solid white;
+            padding: var(--spacing-lg) var(--spacing-3xl);
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            font-weight: 600;
+            transition: all var(--transition);
+        }
+
+        .btn-outline:hover {
+            background: white;
+            color: var(--primary);
+        }
+
+        /* Error states - Heurística #9: Ayudar a reconocer y recuperarse de errores */
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--text-error);
+            color: var(--text-error);
+            padding: var(--spacing-lg);
+            border-radius: var(--radius-md);
+            margin: var(--spacing-lg) 0;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem;
+            }
+
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .team-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .breadcrumb {
+                font-size: 0.8rem;
+                padding: var(--spacing-sm) var(--spacing-md);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .about-container {
+                padding: var(--spacing-lg) var(--spacing-md);
+            }
+
+            .hero-title {
+                font-size: 2rem;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: var(--spacing-lg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Progress indicator - Heurística #1: Visibilidad del sistema -->
+    <div class="page-progress">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div class="main-container gradient-bg">
+        <div class="about-container">
+            <!-- Breadcrumb - Heurística #3: Control y libertad del usuario -->
+            <nav class="breadcrumb">
+                <a href="index.html">🏠 Inicio</a>
+                <span class="breadcrumb-separator">→</span>
+                <span class="breadcrumb-current">Sobre Nosotros</span>
+            </nav>
+
+            <!-- Hero Section -->
+            <section class="hero-section">
+                <div class="logo size-xl">
+                    <img src="/logo.png" alt="CheckNote Logo">
+                </div>
+                <h1 class="hero-title">Sobre CheckNote</h1>
+                <p class="hero-subtitle">
+                    Desarrollamos CheckNote como un proyecto universitario que se convirtió en una herramienta poderosa 
+                    para la organización personal. Nuestro equipo de 5 desarrolladores trabaja para crear la mejor experiencia de usuario.
+                </p>
+            </section>
+
+            <!-- Content Grid - Heurística #2: Coincidencia entre sistema y mundo real -->
+            <div class="content-grid">
+                <div class="content-card">
+                    <div class="card-icon">🎯</div>
+                    <h3 class="card-title">Nuestra Misión</h3>
+                    <p class="card-description">
+                        Crear una herramienta de gestión de tareas intuitiva y accesible que ayude a estudiantes y profesionales 
+                        a organizar mejor su tiempo y aumentar su productividad.
+                    </p>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-icon">👁️</div>
+                    <h3 class="card-title">Nuestra Visión</h3>
+                    <p class="card-description">
+                        Convertirnos en desarrolladores Full Stack competentes y crear aplicaciones web que resuelvan 
+                        problemas reales mientras aplicamos las mejores prácticas de desarrollo.
+                    </p>
+                </div>
+
+                <div class="content-card">
+                    <div class="card-icon">💎</div>
+                    <h3 class="card-title">Nuestros Valores</h3>
+                    <p class="card-description">
+                        Trabajo en equipo, aprendizaje continuo, código limpio y experiencia de usuario. 
+                        Cada línea de código refleja nuestro compromiso con la excelencia académica y profesional.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Stats Section - Heurística #4: Consistencia y estándares -->
+            <section class="stats-section">
+                <h2 class="section-title">CheckNote en Números</h2>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-number">247</span>
+                        <span class="stat-label">Usuarios Activos</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">3.2K</span>
+                        <span class="stat-label">Tareas Completadas</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">98.5%</span>
+                        <span class="stat-label">Tiempo de Actividad</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">12hrs</span>
+                        <span class="stat-label">Soporte Diario</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Team Section -->
+            <section class="team-section">
+                <h2 class="section-title">Nuestro Equipo</h2>
+                <div class="team-grid">
+                    <div class="team-member">
+                        <div class="member-avatar">
+                            <img src="DalexM.png" alt="Daniel Alexander Maigual" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                        </div>
+                        <h4 class="member-name">Daniel Alexander Maigual</h4>
+                        <p class="member-role">Product Owner & Backend Dev</p>
+                        <p class="member-description">
+                            Lidera la visión del producto y desarrolla la arquitectura backend robusta que impulsa CheckNote.
+                        </p>
+                    </div>
+
+                    <div class="team-member">
+                        <div class="member-avatar">
+                            <img src="DalejB.png" alt="Diego Alejandro Barrera" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                        </div>
+                        <h4 class="member-name">Diego Alejandro Barrera</h4>
+                        <p class="member-role">Frontend Developer</p>
+                        <p class="member-description">
+                            Especialista en crear interfaces intuitivas y experiencias de usuario excepcionales.
+                        </p>
+                    </div>
+
+                    <div class="team-member">
+                        <div class="member-avatar">
+                            <img src="JcarV.png" alt="Juan Carlos Villa" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                        </div>
+                        <h4 class="member-name">Juan Carlos Villa</h4>
+                        <p class="member-role">Pruebas de Usabilidad & Tester</p>
+                        <p class="member-description">
+                            Garantiza la calidad y usabilidad del producto a través de pruebas exhaustivas y análisis UX.
+                        </p>
+                    </div>
+
+                    <div class="team-member">
+                        <div class="member-avatar">
+                            <img src="MresL.png" alt="Miguel Angel Restrepo" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                        </div>
+                        <h4 class="member-name">Miguel Angel Restrepo</h4>
+                        <p class="member-role">Gestión de Proyectos & Frontend Dev</p>
+                        <p class="member-description">
+                            Coordina el desarrollo del proyecto y colabora en el frontend con control de versiones eficiente.
+                        </p>
+                    </div>
+
+                    <div class="team-member">
+                        <div class="member-avatar">
+                            <img src="JjosF.png" alt="Juan Jose Florez" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                        </div>
+                        <h4 class="member-name">Juan José Flórez</h4>
+                        <p class="member-role">Base de Datos & Backend Helper</p>
+                        <p class="member-description">
+                            Diseña y optimiza la estructura de datos, apoyando el desarrollo backend de CheckNote.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Error Message - Heurística #9: Ayudar a reconocer errores -->
+            <div class="error-message" id="connectionError">
+                ⚠️ <strong>Problema de conexión:</strong> No pudimos cargar toda la información. 
+                <a href="#" onclick="retryConnection()" style="color: var(--text-error); text-decoration: underline;">
+                    Intentar de nuevo
+                </a>
+            </div>
+
+            <!-- Contact CTA - Heurística #6: Reconocimiento en lugar de recuerdo -->
+            <section class="contact-cta">
+                <h2 class="cta-title">¿Tienes preguntas?</h2>
+                <p class="cta-description">
+                    Estamos aquí para ayudarte. Contáctanos y te responderemos en menos de 24 horas.
+                </p>
+                <div class="cta-buttons">
+                    <a href="mailto:checknoteSupport@checknote.co" class="btn-white">
+                        📧 Enviar Email
+                    </a>
+                    <a href="#" class="btn-outline" onclick="openChat()">
+                        💬 Chat en Vivo
+                    </a>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        // Heurística #1: Visibilidad del sistema - Progress indicator
+        function updateProgressBar() {
+            const scrollTop = window.pageYOffset;
+            const docHeight = document.body.offsetHeight - window.innerHeight;
+            const scrollPercent = (scrollTop / docHeight) * 100;
+            document.getElementById('progressBar').style.width = scrollPercent + '%';
+        }
+
+        window.addEventListener('scroll', updateProgressBar);
+
+        // Heurística #5: Prevención de errores - Connection monitoring
+        let connectionRetries = 0;
+        const maxRetries = 3;
+
+        function simulateConnectionCheck() {
+            // Simular verificación de conexión
+            if (Math.random() < 0.1 && connectionRetries === 0) { // 10% chance de "error"
+                showConnectionError();
+            }
+        }
+
+        function showConnectionError() {
+            const errorElement = document.getElementById('connectionError');
+            errorElement.classList.add('show');
+            
+            // Auto-hide después de 10 segundos
+            setTimeout(() => {
+                hideConnectionError();
+            }, 10000);
+        }
+
+        function hideConnectionError() {
+            const errorElement = document.getElementById('connectionError');
+            errorElement.classList.remove('show');
+        }
+
+        function retryConnection() {
+            connectionRetries++;
+            hideConnectionError();
+            
+            if (connectionRetries < maxRetries) {
+                // Simular retry exitoso
+                setTimeout(() => {
+                    // En una app real, aquí recargarías los datos
+                    console.log('Conexión restablecida');
+                }, 1000);
+            } else {
+                // Después del máximo de reintentos, mostrar mensaje diferente
+                alert('No se pudo establecer conexión. Por favor, verifica tu internet e intenta más tarde.');
+            }
+        }
+
+        // Heurística #6: Reconocimiento en lugar de recuerdo - Chat function
+        function openChat() {
+            alert('🤖 Chat en vivo próximamente disponible!\n\nMientras tanto, puedes escribirnos a: hola@checknote.com');
+        }
+
+        // Animaciones suaves para elementos que entran en viewport
+        function animateOnScroll() {
+            const elements = document.querySelectorAll('.content-card, .team-member');
+            elements.forEach(element => {
+                const elementTop = element.getBoundingClientRect().top;
+                const elementVisible = 150;
+                
+                if (elementTop < window.innerHeight - elementVisible) {
+                    element.style.opacity = '1';
+                    element.style.transform = 'translateY(0)';
+                }
+            });
+        }
+
+        // Initialize animations
+        document.addEventListener('DOMContentLoaded', function() {
+            // Preparar elementos para animación
+            const elements = document.querySelectorAll('.content-card, .team-member');
+            elements.forEach(element => {
+                element.style.opacity = '0';
+                element.style.transform = 'translateY(30px)';
+                element.style.transition = 'all 0.6s ease';
+            });
+            
+            // Simular verificación de conexión después de cargar
+            setTimeout(simulateConnectionCheck, 2000);
+        });
+
+        window.addEventListener('scroll', animateOnScroll);
+        animateOnScroll(); // Ejecutar una vez al cargar
+    </script>
+</body>
+</html>

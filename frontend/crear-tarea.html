@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Tarea - CheckNote</title>
+    <link rel="stylesheet" href="./GlobalCSS2.css">
+    <style>
+        /* Solo estilos específicos que no están en GlobalCSS2 */
+        @media (max-width: 768px) {
+            .form-container {
+                margin: var(--spacing-md);
+                padding: var(--spacing-lg);
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn-primary, .btn-secondary {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-root">
+        <!-- TOPBAR -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <a href="home.html" style="display: flex; align-items: center; text-decoration: none;">
+                    <img src="/back.png" alt="volver" class="icon" style="margin-right: 8px;" />
+                    <span style="color: var(--text-primary);">Volver</span>
+                </a>
+            </div>
+
+            <div class="topbar-center">
+                <span style="color: var(--text-primary); font-weight: 500;">Crear Tarea</span>
+            </div>
+
+            <div class="topbar-right">
+                <a href="perfil.html" style="display: flex; align-items: center; gap: 8px; text-decoration: none;">
+                    <img src="/usuario.png" alt="usuario" class="icon user-icon" />
+                    <span class="username" id="username">Usuario</span>
+                </a>
+            </div>
+        </header>
+
+        <!-- MAIN -->
+        <main class="main">
+            <div class="center-column">
+                <!-- Mensajes de estado -->
+                <div id="error-message" class="error-message hidden"></div>
+                <div id="success-message" class="success-message hidden"></div>
+
+                <!-- Formulario en tarjeta -->
+                <div class="form-container">
+                    <div class="page-header">
+                        <h1 class="page-title">📝 Crear Nueva Tarea</h1>
+                        <p class="page-subtitle">Completa los detalles para crear tu tarea</p>
+                    </div>
+                    
+                    <form id="task-form" class="form">
+                        <!-- Título -->
+                        <div class="form-group">
+                            <label class="form-label" for="titulo">Título de la tarea</label>
+                            <input
+                                type="text"
+                                id="titulo"
+                                name="titulo"
+                                class="form-input"
+                                placeholder="Ej: Completar proyecto de React"
+                                required
+                            />
+                        </div>
+
+                        <!-- Descripción -->
+                        <div class="form-group">
+                            <label class="form-label" for="descripcion">Descripción</label>
+                            <textarea
+                                id="descripcion"
+                                name="descripcion"
+                                class="form-textarea"
+                                placeholder="Describe los detalles de la tarea..."
+                                required
+                            ></textarea>
+                        </div>
+
+                        <!-- Fecha y Hora -->
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label" for="fechaVencimiento">Fecha límite</label>
+                                <input
+                                    type="date"
+                                    id="fechaVencimiento"
+                                    name="fechaVencimiento"
+                                    class="form-input"
+                                    required
+                                />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="hora">Hora límite</label>
+                                <input
+                                    type="time"
+                                    id="hora"
+                                    name="hora"
+                                    class="form-input"
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        <!-- Estado y Prioridad -->
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label" for="estado">Estado inicial</label>
+                                <select id="estado" name="estado" class="form-select" required>
+                                    <option value="pendiente" selected>⏰ Pendiente</option>
+                                    <option value="en_progreso">⚡ En Progreso</option>
+                                    <option value="terminada">✅ Terminada</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="prioridad">Prioridad</label>
+                                <select id="prioridad" name="prioridad" class="form-select" required>
+                                    <option value="baja">🟢 Baja</option>
+                                    <option value="media" selected>🟡 Media</option>
+                                    <option value="alta">🔴 Alta</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Checkbox completada -->
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="completada" name="completada" />
+                            <label for="completada">Marcar como completada</label>
+                        </div>
+
+                        <!-- Botones -->
+                        <div class="button-group">
+                            <button type="submit" class="btn-primary" id="submit-btn">
+                                ✨ Crear Tarea
+                            </button>
+                            <a href="home.html" class="btn-secondary">
+                                ❌ Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+
+        <!-- FOOTER -->
+        <footer class="footer">
+            <a href="home.html" class="footer-link">
+                <img src="/home.png" alt="inicio" class="icon" />
+                <span class="footer-text">Inicio</span>
+            </a>
+        </footer>
+    </div>
+
+    <script>
+        // Estado global
+        let appState = {
+            loading: false,
+            formData: {
+                titulo: '',
+                descripcion: '',
+                fechaVencimiento: '',
+                hora: '',
+                prioridad: 'media',
+                estado: 'pendiente',
+                completada: false
+            }
+        };
+
+        // Referencias DOM
+        const taskForm = document.getElementById('task-form');
+        const submitBtn = document.getElementById('submit-btn');
+        const errorMessage = document.getElementById('error-message');
+        const successMessage = document.getElementById('success-message');
+        const usernameSpan = document.getElementById('username');
+
+        // Elementos del formulario
+        const tituloInput = document.getElementById('titulo');
+        const descripcionTextarea = document.getElementById('descripcion');
+        const fechaInput = document.getElementById('fechaVencimiento');
+        const horaInput = document.getElementById('hora');
+        const prioridadSelect = document.getElementById('prioridad');
+        const estadoSelect = document.getElementById('estado');
+        const completadaCheckbox = document.getElementById('completada');
+
+        // Función para mostrar mensajes
+        function showMessage(type, message, duration = 0) {
+            const messageEl = type === 'error' ? errorMessage : successMessage;
+            if (messageEl) {
+                messageEl.textContent = message;
+                messageEl.classList.remove('hidden');
+                
+                if (duration > 0) {
+                    setTimeout(() => messageEl.classList.add('hidden'), duration);
+                }
+            }
+        }
+
+        function hideMessage(type) {
+            const messageEl = type === 'error' ? errorMessage : successMessage;
+            if (messageEl) {
+                messageEl.classList.add('hidden');
+            }
+        }
+
+        // Función para verificar autenticación
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                showMessage('error', 'No hay sesión activa. Redirigiendo al login...');
+                setTimeout(() => window.location.href = 'login.html', 2000);
+                return false;
+            }
+            return true;
+        }
+
+        // Función para actualizar estado del formulario
+        function updateFormState() {
+            appState.formData = {
+                titulo: tituloInput.value,
+                descripcion: descripcionTextarea.value,
+                fechaVencimiento: fechaInput.value,
+                hora: horaInput.value,
+                prioridad: prioridadSelect.value,
+                estado: estadoSelect.value,
+                completada: completadaCheckbox.checked
+            };
+        }
+
+        // Función para manejar envío del formulario
+        async function handleSubmit(e) {
+            e.preventDefault();
+
+            if (appState.loading) return;
+
+            // Verificar autenticación
+            const token = localStorage.getItem('token');
+            const userId = localStorage.getItem('userId');
+
+            if (!token) {
+                showMessage('error', 'No hay sesión activa. Redirigiendo al login...');
+                setTimeout(() => window.location.href = 'login.html', 2000);
+                return;
+            }
+
+            if (!userId) {
+                showMessage('error', 'No se encontró información del usuario. Por favor, inicia sesión nuevamente.');
+                setTimeout(() => window.location.href = 'login.html', 2000);
+                return;
+            }
+
+            // Actualizar estado del formulario
+            updateFormState();
+
+            // Validaciones básicas
+            if (!appState.formData.titulo.trim()) {
+                showMessage('error', 'El título es requerido.');
+                return;
+            }
+
+            if (!appState.formData.descripcion.trim()) {
+                showMessage('error', 'La descripción es requerida.');
+                return;
+            }
+
+            if (!appState.formData.fechaVencimiento) {
+                showMessage('error', 'La fecha límite es requerida.');
+                return;
+            }
+
+            if (!appState.formData.hora) {
+                showMessage('error', 'La hora límite es requerida.');
+                return;
+            }
+
+            // Iniciar loading
+            appState.loading = true;
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ Creando tarea...';
+            hideMessage('error');
+            hideMessage('success');
+
+            try {
+                // Combinar fecha y hora en formato ISO
+                let fechaCompleta = null;
+                if (appState.formData.fechaVencimiento && appState.formData.hora) {
+                    fechaCompleta = new Date(`${appState.formData.fechaVencimiento}T${appState.formData.hora}:00`).toISOString();
+                } else if (appState.formData.fechaVencimiento) {
+                    fechaCompleta = new Date(`${appState.formData.fechaVencimiento}T23:59:00`).toISOString();
+                }
+
+                // Preparar datos para enviar
+                const taskData = {
+                    titulo: appState.formData.titulo.trim(),
+                    descripcion: appState.formData.descripcion.trim(),
+                    prioridad: appState.formData.prioridad,
+                    estado: appState.formData.estado,
+                    completada: appState.formData.completada,
+                    fechaVencimiento: fechaCompleta,
+                    userId: userId
+                };
+
+                console.log('Datos a enviar:', taskData);
+
+                const response = await fetch('https://checknote-27fe.onrender.com/api/v1/tasks', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                    },
+                    body: JSON.stringify(taskData),
+                });
+
+                console.log('Status de respuesta:', response.status);
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('user');
+                        localStorage.removeItem('userId');
+                        localStorage.removeItem('userName');
+                        
+                        showMessage('error', 'Tu sesión ha expirado. Redirigiendo al login...');
+                        setTimeout(() => window.location.href = 'login.html', 2000);
+                        return;
+                    }
+
+                    const errorText = await response.text();
+                    throw new Error(`Error ${response.status}: ${errorText || response.statusText}`);
+                }
+
+                const result = await response.json();
+                console.log('Tarea creada exitosamente:', result);
+                
+                showMessage('success', '✅ Tarea creada exitosamente. Redirigiendo...', 3000);
+                
+                // Limpiar formulario
+                taskForm.reset();
+                appState.formData = {
+                    titulo: '',
+                    descripcion: '',
+                    fechaVencimiento: '',
+                    hora: '',
+                    prioridad: 'media',
+                    estado: 'pendiente',
+                    completada: false
+                };
+                
+                // Redirigir después de 2 segundos
+                setTimeout(() => {
+                    // Guardar mensaje de éxito para mostrar en home
+                    sessionStorage.setItem('tareaCreada', '✨ Tarea creada exitosamente');
+                    window.location.href = 'home.html';
+                }, 2000);
+
+            } catch (err) {
+                console.error('Error:', err);
+                showMessage('error', 'Error al crear la tarea: ' + err.message);
+            } finally {
+                appState.loading = false;
+                submitBtn.disabled = false;
+                submitBtn.textContent = '✨ Crear Tarea';
+            }
+        }
+
+        // Event listeners
+        taskForm.addEventListener('submit', handleSubmit);
+
+        // Actualizar estado cuando cambian los inputs
+        [tituloInput, descripcionTextarea, fechaInput, horaInput, prioridadSelect, estadoSelect, completadaCheckbox].forEach(input => {
+            input.addEventListener('change', updateFormState);
+            input.addEventListener('input', updateFormState);
+        });
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!checkAuth()) return;
+            
+            // Cargar datos del usuario
+            const storedUser = localStorage.getItem('user');
+            if (storedUser) {
+                try {
+                    const user = JSON.parse(storedUser);
+                    usernameSpan.textContent = user.nombres || 'Usuario';
+                } catch (e) {
+                    usernameSpan.textContent = 'Usuario';
+                }
+            }
+            
+            // Establecer fecha mínima como hoy
+            const today = new Date().toISOString().split('T')[0];
+            fechaInput.setAttribute('min', today);
+            
+            // Actualizar estado inicial
+            updateFormState();
+        });
+    </script>
+</body>
+</html>

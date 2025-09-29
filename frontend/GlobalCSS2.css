@@ -1,0 +1,1222 @@
+/* ============================================
+   GLOBALCSS2.CSS - Sistema para páginas internas
+   ============================================ */
+
+/* Reset y base */
+* { 
+  box-sizing: border-box; 
+  margin: 0; 
+  padding: 0; 
+}
+
+html, body, #root { 
+  height: 100%; 
+}
+
+body {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(180deg, #0b1220 0%, #0f172a 100%);
+  color: #ffffff;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* VARIABLES */
+:root {
+  --primary: #10b981;
+  --primary-dark: #059669;
+  --primary-light: #34d399;
+  
+  --bg-gradient: linear-gradient(180deg, #0b1220 0%, #0f172a 100%);
+  --bg-topbar: #0b1220;
+  
+  /* CAMBIADO: Card con colores sobrios como el login */
+  --bg-card: #1f2937;
+  --bg-card-secondary: #374151;
+  
+  --bg-filter: #111827;
+  --bg-input: #374151;
+  --bg-task-row: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+  --bg-footer: #0b1220;
+  
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255,255,255,0.95);
+  --text-muted: rgba(255,255,255,0.6);
+  --text-dark: #111827;
+  --text-gray: #e6e6e6;
+  
+  --border-color: rgba(255,255,255,0.1);
+  
+  --shadow-topbar: 0 2px 6px rgba(0,0,0,0.25);
+  --shadow-search: 0 2px 8px rgba(0,0,0,0.15);
+  
+  /* CAMBIADO: Sombras más sutiles */
+  --shadow-card: 0 8px 16px rgba(0, 0, 0, 0.4);
+  
+  --shadow-filter: 0 6px 18px rgba(0,0,0,0.25);
+  --shadow-add-btn: 0 8px 24px rgba(2,6,23,0.45);
+  --shadow-task-inset: inset 0 -2px 0 rgba(0,0,0,0.25);
+  
+  --spacing-xs: 6px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 20px;
+  --spacing-2xl: 28px;
+  --spacing-3xl: 32px;
+  
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 999px;
+  
+  --icon-sm: 20px;
+  --icon-md: 26px;
+  
+  --transition: 0.2s ease;
+}
+
+/* ============================================
+   LAYOUT PRINCIPAL
+   ============================================ */
+.page-root { 
+  min-height: 100vh; 
+  display: flex; 
+  flex-direction: column; 
+}
+
+/* ============================================
+   TOPBAR
+   ============================================ */
+.topbar {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 14px var(--spacing-2xl);
+  background: var(--bg-topbar);
+  gap: var(--spacing-md);
+  box-shadow: var(--shadow-topbar);
+}
+
+.topbar-left, 
+.topbar-right { 
+  display: flex; 
+  align-items: center; 
+  gap: var(--spacing-sm); 
+}
+
+.topbar-left { 
+  justify-self: start; 
+}
+
+.topbar-right { 
+  justify-self: end; 
+}
+
+.topbar-center { 
+  justify-self: center; 
+}
+
+/* Iconos del topbar */
+.icon { 
+  width: var(--icon-md); 
+  height: var(--icon-md); 
+  display: block; 
+  cursor: pointer;
+  transition: opacity var(--transition);
+}
+
+.icon:hover {
+  opacity: 0.8;
+}
+
+.user-icon { 
+  filter: brightness(0) invert(1); 
+}
+
+/* Si el icono usuario.png ya es blanco/claro, quita el filtro */
+.user-icon.no-filter {
+  filter: none;
+}
+
+/* Logo específico - MEJORADO CON MÁS TAMAÑO */
+.logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo img {
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+.logo.size-lg {
+  width: 80px;
+  height: 80px;
+}
+
+.logo.size-lg img {
+  width: 80px;
+  height: 80px;
+}
+
+.logo.size-md {
+  width: 56px;
+  height: 56px;
+}
+
+.logo.size-md img {
+  width: 56px;
+  height: 56px;
+}
+
+.logo.size-sm {
+  width: 40px;
+  height: 40px;
+}
+
+.logo.size-sm img {
+  width: 40px;
+  height: 40px;
+}
+
+/* Logo-icon legacy - mantener para compatibilidad */
+.logo-icon {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+
+/* Username en topbar */
+.username {
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* ============================================
+   BUSCADOR
+   ============================================ */
+.search-wrap {
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  color: var(--text-dark);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  width: 420px;
+  max-width: 56vw;
+  box-shadow: var(--shadow-search);
+}
+
+.search-icon { 
+  margin-right: var(--spacing-sm); 
+  opacity: 0.7; 
+  width: var(--icon-sm);
+  height: var(--icon-sm);
+}
+
+.search-input {
+  border: none;
+  outline: none;
+  width: 100%;
+  background: transparent;
+  font-size: 14px;
+  padding: var(--spacing-xs) 4px;
+  color: var(--text-dark);
+}
+
+.search-input::placeholder {
+  color: rgba(0,0,0,0.5);
+}
+
+/* ============================================
+   MAIN CONTENT
+   ============================================ */
+.main {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding: var(--spacing-3xl) var(--spacing-lg);
+}
+
+.center-column {
+  width: 100%;
+  max-width: 760px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 22px;
+}
+
+/* ============================================
+   TARJETA DE PROGRESO - ACTUALIZADA
+   ============================================ */
+.task-card {
+  width: 100%;
+  max-width: 620px;
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-xl);
+  box-shadow: var(--shadow-card);
+  text-align: center;
+  color: var(--text-primary);
+}
+
+.task-title { 
+  font-size: 18px; 
+  margin-bottom: var(--spacing-xs); 
+  font-weight: 700; 
+}
+
+.task-sub { 
+  margin-bottom: var(--spacing-sm); 
+  color: var(--text-secondary); 
+  font-size: 14px;
+}
+
+/* Progress bar */
+.progress-wrap { 
+  width: 100%; 
+  margin-bottom: var(--spacing-sm);
+}
+
+.progress-bar {
+  background: rgba(255,255,255,0.85);
+  height: 10px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.progress { 
+  height: 100%; 
+  background: var(--primary); 
+  border-radius: var(--radius-lg);
+  transition: width var(--transition);
+}
+
+.progress-info { 
+  display: flex; 
+  justify-content: space-between; 
+  font-size: 12px; 
+  margin-top: var(--spacing-sm); 
+  color: var(--text-secondary);
+}
+
+/* ============================================
+   MENSAJES DE ESTADO
+   ============================================ */
+.error-message {
+  padding: 16px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  font-size: 14px;
+  text-align: center;
+  font-weight: 500;
+  margin-bottom: 20px;
+}
+
+.error-message .error-title {
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.error-buttons {
+  margin-top: 12px;
+}
+
+.error-btn {
+  margin: 0 4px;
+  padding: 8px 16px;
+  border-radius: 4px;
+  color: white;
+  cursor: pointer;
+  font-size: 12px;
+  border: 1px solid rgba(255,255,255,0.3);
+  background: none;
+}
+
+.error-btn.retry {
+  background-color: rgba(255,255,255,0.2);
+}
+
+.error-btn.login {
+  background-color: rgba(255,255,255,0.1);
+}
+
+.success-message {
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: white;
+  font-size: 14px;
+  text-align: center;
+  font-weight: 500;
+}
+
+.debug-info {
+  background: #2d3748;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 20px;
+  font-size: 12px;
+  color: #a0aec0;
+  font-family: monospace;
+}
+
+.hidden {
+  display: none;
+}
+
+/* ============================================
+   KANBAN LAYOUT - MEJORADO
+   ============================================ */
+
+/* Kanban mejorado - FORZAR 3 columnas horizontales SIEMPRE */
+.kanban-container {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr;
+  gap: var(--spacing-lg);
+  justify-content: center;
+  margin-bottom: var(--spacing-xl);
+  min-height: 300px;
+}
+
+.kanban-column {
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  min-height: 250px;
+}
+
+.kanban-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 2px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.kanban-icon {
+  font-size: 20px;
+}
+
+.kanban-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.kanban-tasks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  flex: 1;
+  overflow-y: auto;
+}
+
+.kanban-task {
+  background: var(--bg-input);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  transition: all var(--transition);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.kanban-task:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card);
+}
+
+.kanban-task-title {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+  font-size: 14px;
+}
+
+.kanban-task-priority {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 10px;
+  font-weight: bold;
+  text-transform: uppercase;
+  margin-bottom: var(--spacing-sm);
+}
+
+.priority-alta {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+}
+
+.priority-media {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+}
+
+.priority-baja {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+}
+
+/* Acciones de tarea */
+.task-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  justify-content: flex-end;
+}
+
+.task-action-btn {
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition);
+  opacity: 0.7;
+}
+
+.task-action-btn:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.task-action-btn.edit {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+}
+
+.task-action-btn.delete {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.task-action-btn img {
+  width: 14px;
+  height: 14px;
+  filter: brightness(0) invert(1);
+}
+
+/* ============================================
+   FORMULARIOS - NUEVOS ESTILOS
+   ============================================ */
+
+/* Contenedor de formulario */
+.form-container {
+  max-width: 600px;
+  margin: 0 auto;
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-xl);
+  box-shadow: var(--shadow-card);
+}
+
+/* Headers de página */
+.page-header {
+  text-align: center;
+  margin-bottom: var(--spacing-xl);
+}
+
+.page-title {
+  font-size: 28px;
+  font-weight: bold;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.page-subtitle {
+  color: var(--text-secondary);
+  font-size: 16px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  text-align: left;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: var(--spacing-lg);
+}
+
+.form-group label,
+.form-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.form-input,
+.form-textarea,
+.form-select {
+  width: 100%;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255,255,255,0.1);
+  background: var(--bg-card-secondary);
+  color: var(--text-primary);
+  font-size: 14px;
+  outline: none;
+  transition: all var(--transition);
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.form-textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.form-select {
+  cursor: pointer;
+}
+
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus {
+  border-color: var(--primary-light);
+  background: rgba(255,255,255,0.08);
+  box-shadow: 0 0 0 3px rgba(16,185,129,0.1);
+}
+
+.form-input::placeholder,
+.form-textarea::placeholder {
+  color: rgba(255,255,255,0.5);
+}
+
+/* Grid para fecha y hora */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* Checkbox */
+.checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  margin-bottom: var(--spacing-lg);
+}
+
+.checkbox-group input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.checkbox-group label {
+  font-size: 14px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+  margin: 0;
+}
+
+/* Grupos de botones */
+.button-group {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: center;
+  margin-top: var(--spacing-xl);
+}
+
+/* Botón principal */
+.submit-btn,
+.btn-primary {
+  margin-top: 12px;
+  padding: 14px 24px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  box-shadow: var(--shadow-filter);
+  min-width: 120px;
+}
+
+.submit-btn:hover:not(:disabled),
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 25px rgba(16,185,129,0.3);
+}
+
+.submit-btn:disabled,
+.btn-primary:disabled {
+  background: linear-gradient(135deg, #6b7280, #4b5563);
+  cursor: not-allowed;
+  opacity: 0.7;
+  transform: none;
+}
+
+/* Botón secundario */
+.btn-secondary {
+  background: rgba(255,255,255,0.1);
+  color: var(--text-secondary);
+  border: 2px solid var(--border-color);
+  padding: 10px 24px;
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 120px;
+}
+
+.btn-secondary:hover {
+  background: rgba(255,255,255,0.2);
+  border-color: var(--text-secondary);
+}
+
+/* Botón de peligro */
+.btn-danger {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition);
+  min-width: 120px;
+}
+
+.btn-danger:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(239,68,68,0.3);
+}
+
+.btn-danger:disabled {
+  opacity: 0.6;
+  transform: none;
+  cursor: not-allowed;
+}
+
+/* Información de tarea */
+.task-info {
+  background: var(--bg-input);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+}
+
+.task-info-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.task-info-description {
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: var(--spacing-sm);
+}
+
+.task-info-meta {
+  display: flex;
+  gap: var(--spacing-md);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* Mensaje de advertencia */
+.warning-message {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-xl);
+  text-align: center;
+}
+
+.warning-icon {
+  font-size: 48px;
+  margin-bottom: var(--spacing-md);
+}
+
+.warning-text {
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: var(--spacing-sm);
+}
+
+.warning-subtext {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+/* Color especial para título de eliminación */
+.page-title.danger {
+  color: #ef4444;
+}
+
+/* Estados de carga */
+.loading-state {
+  text-align: center;
+  padding: var(--spacing-xl);
+  color: var(--text-secondary);
+}
+
+.loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--border-color);
+  border-top: 3px solid var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto var(--spacing-md);
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Select options styling */
+.form-select option {
+  background: #111827;
+  color: #ffffff;
+}
+
+/* ============================================
+   FILTROS
+   ============================================ */
+.filters { 
+  display: flex; 
+  gap: var(--spacing-md); 
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.filter {
+  background: var(--bg-filter); 
+  color: var(--text-primary); 
+  border: none; 
+  padding: var(--spacing-sm) 14px; 
+  border-radius: var(--radius-sm);
+  cursor: pointer; 
+  box-shadow: var(--shadow-filter);
+  transition: all var(--transition);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.filter:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.filter.active {
+  background: var(--primary);
+  color: white;
+}
+
+/* ============================================
+   BOTÓN CREAR/AGREGAR
+   ============================================ */
+
+/* Botón crear simple - CIRCULAR (legacy) */
+.create-btn {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark)); 
+  color: white; 
+  border: none; 
+  width: 56px; 
+  height: 56px; 
+  border-radius: 50%;
+  font-size: 24px; 
+  cursor: pointer; 
+  box-shadow: var(--shadow-add-btn);
+  transition: all var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.create-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(16,185,129,0.4);
+}
+
+/* Botón crear rectangular - NUEVO */
+.create-task-btn {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: white;
+  border: none;
+  padding: 14px 24px;
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  box-shadow: var(--shadow-filter);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 160px;
+}
+
+.create-task-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(16,185,129,0.3);
+}
+
+/* ============================================
+   BOTÓN FLOTANTE EXPANDIBLE
+   ============================================ */
+.floating-menu {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.floating-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  pointer-events: none;
+}
+
+.floating-options.active {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: all;
+}
+
+.floating-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  color: white;
+  text-decoration: none;
+  font-size: 20px;
+  font-weight: 600;
+  box-shadow: var(--shadow-add-btn);
+  transition: all var(--transition);
+  cursor: pointer;
+  border: none;
+}
+
+.floating-option:hover {
+  transform: translateY(-2px) scale(1.05);
+}
+
+.floating-option.create {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.floating-option.edit {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+}
+
+.floating-option.delete {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.add-btn {
+  background: #ffffff; 
+  color: var(--text-dark); 
+  border: none; 
+  width: 56px; 
+  height: 56px; 
+  border-radius: 50%;
+  font-size: 28px; 
+  cursor: pointer; 
+  box-shadow: var(--shadow-add-btn);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.add-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(2,6,23,0.55);
+}
+
+.add-btn.active {
+  transform: rotate(45deg);
+  background: #ff4444;
+  color: white;
+}
+
+.add-wrap { 
+  display: flex; 
+  justify-content: center; 
+  width: 100%; 
+  margin-top: var(--spacing-xl); 
+}
+
+/* ============================================
+   FOOTER
+   ============================================ */
+.footer {
+  width: 100%;
+  background: var(--bg-footer);
+  padding: var(--spacing-md) 0;
+  display: flex; 
+  justify-content: center; 
+  align-items: center; 
+  gap: var(--spacing-sm);
+  border-top: 1px solid rgba(255,255,255,0.02);
+}
+
+.footer-link {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  text-decoration: none;
+  color: var(--text-primary);
+  transition: opacity var(--transition);
+}
+
+.footer-link:hover {
+  opacity: 0.8;
+}
+
+.footer-text {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ============================================
+   RESPONSIVE - TABLET
+   ============================================ */
+@media (max-width: 900px) {
+  .search-wrap { 
+    width: 300px; 
+    max-width: 60vw; 
+  }
+  
+  .center-column { 
+    max-width: 520px; 
+    padding: 0 var(--spacing-md); 
+  }
+  
+  .task-card { 
+    max-width: 520px; 
+  }
+  
+  .task-list { 
+    max-width: 520px; 
+  }
+  
+  .topbar {
+    padding: 14px var(--spacing-lg);
+  }
+  
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  /* Kanban responsive - MANTENER 3 COLUMNAS SIEMPRE */
+  .kanban-container {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: var(--spacing-md);
+  }
+  
+  .kanban-column {
+    padding: var(--spacing-md);
+    min-height: 200px;
+  }
+  
+  .kanban-task-title {
+    font-size: 12px;
+  }
+}
+
+/* ============================================
+   RESPONSIVE - MÓVIL
+   ============================================ */
+@media (max-width: 600px) {
+  .topbar { 
+    grid-template-columns: 1fr; 
+    gap: var(--spacing-sm); 
+    padding: var(--spacing-md); 
+  }
+  
+  .topbar-right { 
+    justify-self: start; 
+  }
+  
+  .topbar-left { 
+    justify-self: start; 
+  }
+  
+  .topbar-center { 
+    justify-self: stretch; 
+    display: flex; 
+    justify-content: center; 
+  }
+  
+  .search-wrap { 
+    width: 100%; 
+    max-width: 360px; 
+  }
+  
+  .filters { 
+    flex-direction: column; 
+    gap: var(--spacing-sm); 
+    align-items: center; 
+  }
+  
+  .filter {
+    min-width: 120px;
+    text-align: center;
+  }
+  
+  .main {
+    padding: var(--spacing-xl) var(--spacing-sm);
+  }
+  
+  .center-column {
+    gap: var(--spacing-lg);
+  }
+  
+  .task-card {
+    padding: var(--spacing-lg);
+    max-width: 95%;
+  }
+  
+  .task-title {
+    font-size: 16px;
+  }
+  
+  .task-row {
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+  
+  .task-label {
+    font-size: 14px;
+  }
+  
+  .task-number {
+    font-size: 14px;
+  }
+  
+  .floating-option {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+  }
+  
+  .add-btn {
+    width: 48px;
+    height: 48px;
+    font-size: 24px;
+  }
+  
+  /* Kanban responsive móvil - MANTENER 3 COLUMNAS SIEMPRE */
+  .kanban-container {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+  }
+  
+  .kanban-column {
+    padding: 8px;
+    min-height: 180px;
+  }
+  
+  .kanban-header {
+    margin-bottom: var(--spacing-md);
+  }
+  
+  .kanban-title {
+    font-size: 11px;
+  }
+  
+  .kanban-task {
+    padding: 8px;
+  }
+  
+  .kanban-task-title {
+    font-size: 11px;
+  }
+  
+  .task-action-btn {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .task-action-btn img {
+    width: 12px;
+    height: 12px;
+  }
+  
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================================
+   RESPONSIVE - MÓVIL PEQUEÑO
+   ============================================ */
+@media (max-width: 360px) {
+  .topbar {
+    padding: var(--spacing-sm);
+  }
+  
+  .main {
+    padding: var(--spacing-lg) var(--spacing-xs);
+  }
+  
+  .task-row {
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+  
+  .task-left {
+    gap: var(--spacing-sm);
+  }
+  
+  .task-right {
+    gap: var(--spacing-sm);
+  }
+}
