@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+html<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -142,46 +142,203 @@
     </div>
 
     <script>
-        // Variables para manejar el estado del formulario
+        /**
+         * @file Formulario de registro de usuarios - CheckNote
+         * @description Gestiona el registro completo de nuevos usuarios con validaciones del lado del cliente
+         * 
+         * Funcionalidades principales:
+         * - Validación de campos en tiempo real
+         * - Validación de contraseñas seguras (regex)
+         * - Confirmación de contraseñas coincidentes
+         * - Manejo de estados de carga durante peticiones
+         * - Gestión de errores con mensajes descriptivos
+         * - Redirección automática al login tras registro exitoso
+         * 
+         * Flujo de registro:
+         * 1. Usuario completa formulario
+         * 2. Validaciones del lado del cliente
+         * 3. Envío de datos al API (POST /api/v1/users/registro)
+         * 4. Si éxito: redirección a login con mensaje de confirmación
+         * 5. Si error: mensaje descriptivo al usuario
+         * 
+         * @requires GlobalCSS1.css - Estilos globales de la aplicación
+         * @requires API endpoint: POST https://checknote-27fe.onrender.com/api/v1/users/registro/
+         */
+
+        // ============================================
+        // VARIABLES DE ESTADO GLOBAL
+        // ============================================
+        
+        /**
+         * Indica si hay una petición en curso
+         * Previene múltiples envíos simultáneos del formulario
+         * @type {boolean}
+         */
         let isLoading = false;
 
-        // Elementos del DOM
+        // ============================================
+        // REFERENCIAS A ELEMENTOS DEL DOM
+        // ============================================
+        
+        /**
+         * Formulario principal de registro
+         * @type {HTMLFormElement}
+         */
         const form = document.getElementById('registroForm');
+        
+        /**
+         * Botón de envío del formulario
+         * @type {HTMLButtonElement}
+         */
         const submitBtn = document.getElementById('submitBtn');
+        
+        /**
+         * Texto del botón de envío
+         * @type {HTMLSpanElement}
+         */
         const btnText = document.getElementById('btnText');
+        
+        /**
+         * Spinner de carga dentro del botón
+         * @type {HTMLSpanElement}
+         */
         const loadingSpinner = document.getElementById('loadingSpinner');
+        
+        /**
+         * Contenedor para mensajes de error
+         * @type {HTMLDivElement}
+         */
         const errorMessage = document.getElementById('errorMessage');
 
-        // Campos del formulario
+        // ============================================
+        // REFERENCIAS A CAMPOS DEL FORMULARIO
+        // ============================================
+        
+        /**
+         * Input del campo nombres
+         * @type {HTMLInputElement}
+         */
         const nombres = document.getElementById('nombres');
+        
+        /**
+         * Input del campo apellidos
+         * @type {HTMLInputElement}
+         */
         const apellidos = document.getElementById('apellidos');
+        
+        /**
+         * Input del campo edad
+         * @type {HTMLInputElement}
+         */
         const edad = document.getElementById('edad');
+        
+        /**
+         * Input del campo correo electrónico
+         * @type {HTMLInputElement}
+         */
         const correo = document.getElementById('correo');
+        
+        /**
+         * Input del campo contraseña
+         * @type {HTMLInputElement}
+         */
         const contrasena = document.getElementById('contrasena');
+        
+        /**
+         * Input del campo confirmar contraseña
+         * @type {HTMLInputElement}
+         */
         const confirmarContrasena = document.getElementById('confirmarContrasena');
+        
+        /**
+         * Checkbox de aceptación de términos y condiciones
+         * @type {HTMLInputElement}
+         */
         const terms = document.getElementById('terms');
 
-        // Función para mostrar errores
+        // ============================================
+        // FUNCIONES DE GESTIÓN DE MENSAJES
+        // ============================================
+
+        /**
+         * Muestra un mensaje de error al usuario
+         * 
+         * Hace visible el contenedor de errores con el mensaje especificado
+         * y realiza scroll suave hacia el mensaje para asegurar visibilidad
+         * 
+         * @param {string} message - Mensaje de error a mostrar al usuario
+         * 
+         * @example
+         * showError('Las contraseñas no coinciden');
+         * showError('El correo ya está registrado');
+         */
         function showError(message) {
             errorMessage.textContent = message;
             errorMessage.style.display = 'block';
             
-            // Scroll al error si es necesario
+            // Scroll al error si es necesario para mejorar UX
             errorMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
-        // Función para ocultar errores
+        /**
+         * Oculta el mensaje de error actual
+         * 
+         * Hace invisible el contenedor de errores, generalmente usado
+         * cuando el usuario comienza a corregir el formulario
+         * 
+         * @example
+         * hideError(); // Se llama cuando el usuario empieza a escribir
+         */
         function hideError() {
             errorMessage.style.display = 'none';
         }
 
-        // Función para validar contraseña
+        // ============================================
+        // FUNCIONES DE VALIDACIÓN
+        // ============================================
+
+        /**
+         * Valida que una contraseña cumpla con los requisitos de seguridad
+         * 
+         * Requisitos de contraseña segura:
+         * - Mínimo 8 caracteres
+         * - Al menos 1 letra mayúscula (A-Z)
+         * - Al menos 1 número (0-9)
+         * - Al menos 1 carácter especial (!@#$%^&*()_+-=[]{}; etc.)
+         * 
+         * @param {string} password - Contraseña a validar
+         * @returns {boolean} true si la contraseña cumple todos los requisitos, false en caso contrario
+         * 
+         * @example
+         * validatePassword('Test123!'); // true
+         * validatePassword('test123'); // false - falta mayúscula y carácter especial
+         * validatePassword('Test!'); // false - menos de 8 caracteres
+         */
         function validatePassword(password) {
+            // Regex que valida: mayúscula, número, carácter especial, mínimo 8 caracteres
             const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
             return passwordRegex.test(password);
         }
 
-        // Función para manejar el estado de carga
+        // ============================================
+        // GESTIÓN DE ESTADO DE CARGA
+        // ============================================
+
+        /**
+         * Controla el estado visual de carga del botón de envío
+         * 
+         * Maneja la transición visual del botón entre estados normal y cargando:
+         * - En estado loading: deshabilita el botón, muestra spinner, oculta texto
+         * - En estado normal: habilita el botón, oculta spinner, muestra texto
+         * 
+         * Esto previene múltiples envíos y proporciona feedback visual al usuario
+         * 
+         * @param {boolean} loading - true para activar estado de carga, false para desactivar
+         * 
+         * @example
+         * setLoading(true);  // Antes de enviar petición
+         * setLoading(false); // Después de recibir respuesta
+         */
         function setLoading(loading) {
             isLoading = loading;
             
@@ -198,7 +355,38 @@
             }
         }
 
-        // Función para realizar el registro
+        // ============================================
+        // FUNCIÓN DE REGISTRO (PETICIÓN AL API)
+        // ============================================
+
+        /**
+         * Realiza la petición de registro al servidor
+         * 
+         * Envía los datos del usuario al endpoint de registro y maneja la respuesta.
+         * En caso de éxito, almacena un mensaje en sessionStorage y redirige al login.
+         * En caso de error, lanza una excepción con el mensaje del servidor.
+         * 
+         * @async
+         * @param {Object} formData - Objeto con los datos del formulario
+         * @param {string} formData.nombres - Nombre(s) del usuario
+         * @param {string} formData.apellidos - Apellido(s) del usuario
+         * @param {number} formData.edad - Edad del usuario (mínimo 13)
+         * @param {string} formData.correo - Correo electrónico único del usuario
+         * @param {string} formData.contrasena - Contraseña del usuario (debe cumplir requisitos)
+         * @param {string} formData.confirmarContrasena - Confirmación de contraseña (debe coincidir)
+         * 
+         * @throws {Error} Si la petición falla o el servidor retorna un error
+         * 
+         * @example
+         * await handleRegistro({
+         *   nombres: 'Juan',
+         *   apellidos: 'Pérez',
+         *   edad: 25,
+         *   correo: 'juan@example.com',
+         *   contrasena: 'SecurePass123!',
+         *   confirmarContrasena: 'SecurePass123!'
+         * });
+         */
         async function handleRegistro(formData) {
             try {
                 const response = await fetch('https://checknote-27fe.onrender.com/api/v1/users/registro/', {
@@ -214,8 +402,9 @@
                     throw new Error(errorData.message || 'Error en el registro. Inténtalo de nuevo.');
                 }
 
-                // Registro exitoso - redirigir al login con mensaje de éxito
-                // Almacenar mensaje de éxito temporalmente
+                // Registro exitoso - preparar redirección al login
+                // Almacenar mensaje de éxito temporalmente en sessionStorage
+                // para mostrarlo en la página de login
                 sessionStorage.setItem('registroExitoso', '¡Registro exitoso! Por favor, inicia sesión.');
                 window.location.href = '/login.html';
 
@@ -224,17 +413,36 @@
             }
         }
 
-        // Event listener para el formulario
+        // ============================================
+        // EVENT LISTENER PRINCIPAL DEL FORMULARIO
+        // ============================================
+
+        /**
+         * Maneja el evento submit del formulario de registro
+         * 
+         * Flujo de validación y envío:
+         * 1. Previene el comportamiento por defecto del formulario
+         * 2. Limpia errores previos
+         * 3. Obtiene y sanitiza valores de los campos
+         * 4. Ejecuta validaciones del lado del cliente:
+         *    - Coincidencia de contraseñas
+         *    - Fortaleza de contraseña (regex)
+         *    - Aceptación de términos
+         * 5. Si todas las validaciones pasan, envía datos al servidor
+         * 6. Maneja estados de carga y errores apropiadamente
+         * 
+         * @listens submit - Escucha el evento submit del formulario
+         */
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
             // Limpiar errores previos
             hideError();
 
-            // Si ya está cargando, no hacer nada
+            // Prevenir múltiples envíos
             if (isLoading) return;
 
-            // Obtener valores del formulario
+            // Obtener y sanitizar valores del formulario
             const nombresValue = nombres.value.trim();
             const apellidosValue = apellidos.value.trim();
             const edadValue = parseInt(edad.value, 10);
@@ -243,23 +451,29 @@
             const confirmarContrasenaValue = confirmarContrasena.value;
             const termsValue = terms.checked;
 
-            // Validaciones del lado del cliente
+            // ==========================================
+            // VALIDACIONES DEL LADO DEL CLIENTE
+            // ==========================================
+            
+            // Validar que las contraseñas coincidan
             if (contrasenaValue !== confirmarContrasenaValue) {
                 showError('Las contraseñas no coinciden.');
                 return;
             }
 
+            // Validar fortaleza de la contraseña
             if (!validatePassword(contrasenaValue)) {
                 showError('La contraseña debe contener al menos 8 caracteres, 1 mayúscula, 1 número y 1 carácter especial.');
                 return;
             }
 
+            // Validar aceptación de términos
             if (!termsValue) {
                 showError('Debes aceptar los términos y condiciones.');
                 return;
             }
 
-            // Preparar datos para envío
+            // Preparar objeto con datos para enviar al API
             const formData = {
                 nombres: nombresValue,
                 apellidos: apellidosValue,
@@ -272,21 +486,38 @@
             // Activar estado de carga
             setLoading(true);
 
-            // Realizar registro
+            // Realizar petición de registro
             try {
                 await handleRegistro(formData);
             } finally {
+                // Siempre desactivar estado de carga, incluso si hay error
                 setLoading(false);
             }
         });
 
-        // Limpiar errores cuando el usuario comience a escribir
+        // ============================================
+        // VALIDACIONES EN TIEMPO REAL
+        // ============================================
+
+        /**
+         * Limpia errores cuando el usuario interactúa con cualquier campo
+         * 
+         * Mejora la UX al eliminar mensajes de error inmediatamente cuando
+         * el usuario comienza a corregir el formulario
+         */
         [nombres, apellidos, edad, correo, contrasena, confirmarContrasena, terms].forEach(field => {
             field.addEventListener('input', hideError);
             field.addEventListener('change', hideError);
         });
 
-        // Validación en tiempo real de confirmación de contraseña
+        /**
+         * Validación en tiempo real de confirmación de contraseña
+         * 
+         * Compara la contraseña con su confirmación mientras el usuario escribe
+         * y utiliza la API de validación nativa del navegador para mostrar feedback
+         * 
+         * @listens input - Se ejecuta cada vez que cambia el valor del campo
+         */
         confirmarContrasena.addEventListener('input', () => {
             if (contrasena.value && confirmarContrasena.value) {
                 if (contrasena.value !== confirmarContrasena.value) {
@@ -297,9 +528,19 @@
             }
         });
 
-        // Validación en tiempo real de la contraseña
+        /**
+         * Validación en tiempo real de fortaleza de contraseña
+         * 
+         * Valida la contraseña según el regex de seguridad mientras el usuario escribe.
+         * También re-valida el campo de confirmación si ya tiene contenido.
+         * Utiliza la API de validación HTML5 para mostrar mensajes nativos del navegador.
+         * 
+         * @listens input - Se ejecuta cada vez que cambia el valor del campo contraseña
+         */
         contrasena.addEventListener('input', () => {
             const password = contrasena.value;
+            
+            // Validar fortaleza de contraseña
             if (password && !validatePassword(password)) {
                 contrasena.setCustomValidity('La contraseña debe contener al menos 8 caracteres, 1 mayúscula, 1 número y 1 carácter especial');
             } else {
@@ -307,6 +548,7 @@
             }
             
             // También validar confirmación si ya tiene valor
+            // Esto mantiene la sincronización entre ambos campos
             if (confirmarContrasena.value) {
                 if (password !== confirmarContrasena.value) {
                     confirmarContrasena.setCustomValidity('Las contraseñas no coinciden');

@@ -145,29 +145,95 @@
     </div>
 
     <script>
-        // Variables globales
+        /**
+         * @file editar-tarea.html
+         * @description Página para editar tareas existentes en CheckNote.
+         *              Permite modificar todos los atributos de una tarea previamente creada.
+         *              Los datos se cargan desde localStorage o parámetros URL.
+         * @requires GlobalCSS2.css
+         * @author Equipo CheckNote
+         * @version 1.0.0
+         */
+
+        /**
+         * @typedef {Object} Task
+         * @description Estructura completa de una tarea
+         * @property {string} id - Identificador único de la tarea (puede ser _id en MongoDB)
+         * @property {string} _id - Identificador de MongoDB (alternativo a id)
+         * @property {string} titulo - Título de la tarea
+         * @property {string} descripcion - Descripción detallada
+         * @property {string} fechaVencimiento - Fecha de vencimiento en formato ISO 8601
+         * @property {('pendiente'|'en_progreso'|'terminada')} estado - Estado actual
+         * @property {('baja'|'media'|'alta')} prioridad - Nivel de prioridad
+         * @property {boolean} completada - Indica si está completada
+         * @property {string} userId - ID del usuario propietario
+         */
+
+        /**
+         * @typedef {Object} FormattedDate
+         * @description Fecha y hora formateadas para inputs HTML
+         * @property {string} fecha - Fecha en formato YYYY-MM-DD
+         * @property {string} hora - Hora en formato HH:MM
+         */
+
+        /**
+         * Tarea actual siendo editada
+         * @type {Task|null}
+         */
         let tareaActual = null;
+
+        /**
+         * ID de la tarea actual
+         * @type {string|null}
+         */
         let tareaId = null;
 
-        // Referencias DOM
+        /**
+         * Referencias a elementos del DOM
+         * @type {Object.<string, HTMLElement>}
+         */
         const elements = {
+            /** @type {HTMLDivElement} */
             loadingState: document.getElementById('loading-state'),
+            /** @type {HTMLDivElement} */
             formContainer: document.getElementById('form-container'),
+            /** @type {HTMLDivElement} */
             errorMessage: document.getElementById('error-message'),
+            /** @type {HTMLDivElement} */
             successMessage: document.getElementById('success-message'),
+            /** @type {HTMLFormElement} */
             editForm: document.getElementById('edit-form'),
+            /** @type {HTMLInputElement} */
             titulo: document.getElementById('titulo'),
+            /** @type {HTMLTextAreaElement} */
             descripcion: document.getElementById('descripcion'),
+            /** @type {HTMLInputElement} */
             fecha: document.getElementById('fecha'),
+            /** @type {HTMLInputElement} */
             hora: document.getElementById('hora'),
+            /** @type {HTMLSelectElement} */
             estado: document.getElementById('estado'),
+            /** @type {HTMLSelectElement} */
             prioridad: document.getElementById('prioridad'),
+            /** @type {HTMLInputElement} */
             completada: document.getElementById('completada'),
+            /** @type {HTMLButtonElement} */
             saveBtn: document.getElementById('save-btn'),
+            /** @type {HTMLSpanElement} */
             username: document.getElementById('username')
         };
 
-        // Función para mostrar mensajes
+        /**
+         * Muestra un mensaje de estado al usuario
+         * @param {('error'|'success')} type - Tipo de mensaje a mostrar
+         * @param {string} message - Texto del mensaje
+         * @param {number} [duration=0] - Duración en milisegundos antes de ocultar (0 = permanente)
+         * @returns {void}
+         * 
+         * @example
+         * showMessage('success', 'Tarea actualizada correctamente', 3000);
+         * showMessage('error', 'Error al cargar la tarea');
+         */
         function showMessage(type, message, duration = 0) {
             const messageEl = elements[type + 'Message'];
             if (messageEl) {
@@ -180,6 +246,11 @@
             }
         }
 
+        /**
+         * Oculta un mensaje de estado
+         * @param {('error'|'success')} type - Tipo de mensaje a ocultar
+         * @returns {void}
+         */
         function hideMessage(type) {
             const messageEl = elements[type + 'Message'];
             if (messageEl) {
@@ -187,7 +258,19 @@
             }
         }
 
-        // Función para obtener parámetros de la URL
+        /**
+         * Obtiene los parámetros de la URL actual
+         * Se usa como fallback si no hay datos en localStorage
+         * 
+         * @returns {Object} Objeto con parámetros extraídos de la URL
+         * @property {string|null} id - ID de la tarea
+         * @property {string|null} titulo - Título de la tarea
+         * @property {string|null} descripcion - Descripción de la tarea
+         * @property {string|null} fechaVencimiento - Fecha de vencimiento
+         * @property {string|null} estado - Estado de la tarea
+         * @property {string|null} prioridad - Prioridad de la tarea
+         * @property {boolean} completada - Si está completada
+         */
         function getUrlParams() {
             const urlParams = new URLSearchParams(window.location.search);
             return {
@@ -201,7 +284,18 @@
             };
         }
 
-        // Función para formatear fecha para input
+        /**
+         * Formatea una fecha ISO 8601 para inputs HTML5
+         * Convierte de formato ISO (2024-01-15T14:30:00.000Z) a formato de inputs
+         * 
+         * @param {string} fechaISO - Fecha en formato ISO 8601
+         * @returns {FormattedDate} Objeto con fecha y hora formateadas
+         * 
+         * @example
+         * const { fecha, hora } = formatearFechaParaInput('2024-01-15T14:30:00.000Z');
+         * // fecha = "2024-01-15"
+         * // hora = "14:30"
+         */
         function formatearFechaParaInput(fechaISO) {
             if (!fechaISO || fechaISO === 'null') return { fecha: "", hora: "" };
             
@@ -217,7 +311,14 @@
             }
         }
 
-        // Función para cargar datos de la tarea
+        /**
+         * Carga los datos de la tarea a editar
+         * Prioriza datos desde localStorage sobre parámetros URL para mayor seguridad.
+         * Si no encuentra datos, redirige al home con mensaje de error.
+         * 
+         * @returns {void}
+         * @throws {Error} Si no se encuentran datos de la tarea
+         */
         function cargarDatosTarea() {
             try {
                 // Intentar obtener datos desde localStorage (preferido)
@@ -248,7 +349,13 @@
             }
         }
 
-        // Función para llenar el formulario con datos de la tarea
+        /**
+         * Llena el formulario con los datos de una tarea
+         * Asigna valores a todos los campos del formulario y gestiona la visibilidad
+         * 
+         * @param {Task} tarea - Objeto con los datos de la tarea
+         * @returns {void}
+         */
         function llenarFormulario(tarea) {
             try {
                 // Guardar referencia a la tarea y su ID
@@ -280,7 +387,23 @@
             }
         }
 
-        // Función para guardar cambios
+        /**
+         * Guarda los cambios realizados en la tarea
+         * Valida, formatea y envía los datos actualizados al backend mediante PUT
+         * 
+         * @async
+         * @param {Event} e - Evento de submit del formulario
+         * @returns {Promise<void>}
+         * @throws {Error} Si hay problemas con la autenticación o la petición
+         * 
+         * @description
+         * Proceso:
+         * 1. Previene envío por defecto
+         * 2. Valida ID de tarea y autenticación
+         * 3. Combina fecha y hora en formato ISO
+         * 4. Envía PUT a /api/v1/tasks/:id
+         * 5. Maneja respuesta y redirige al home
+         */
         async function guardarCambios(e) {
             e.preventDefault();
 
@@ -313,6 +436,18 @@
                     fechaCompleta = new Date(`${fecha}T23:59:00`).toISOString();
                 }
 
+                /**
+                 * @typedef {Object} TaskUpdatePayload
+                 * @description Payload para actualizar una tarea
+                 * @property {string} titulo - Título actualizado
+                 * @property {string} descripcion - Descripción actualizada
+                 * @property {string} prioridad - Prioridad actualizada
+                 * @property {string} estado - Estado actualizado
+                 * @property {boolean} completada - Estado de completado
+                 * @property {string|null} fechaVencimiento - Fecha en formato ISO 8601
+                 */
+
+                /** @type {TaskUpdatePayload} */
                 const taskData = {
                     titulo: elements.titulo.value.trim(),
                     descripcion: elements.descripcion.value.trim(),
@@ -373,7 +508,12 @@
         // Event listeners
         elements.editForm.addEventListener('submit', guardarCambios);
 
-        // Inicialización
+        /**
+         * Inicialización al cargar el DOM
+         * Verifica autenticación, carga datos del usuario y de la tarea
+         * 
+         * @listens DOMContentLoaded
+         */
         document.addEventListener('DOMContentLoaded', function() {
             // Verificar autenticación
             const token = localStorage.getItem('token');

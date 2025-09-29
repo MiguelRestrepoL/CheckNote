@@ -253,56 +253,72 @@
     </div>
 
     <script>
-        // Variables globales
+        /**
+         * @file Gestión de perfil de usuario - CheckNote
+         * @description Permite ver y editar información personal, de cuenta y seguridad
+         */
+
+        // ============================================
+        // ESTADO GLOBAL
+        // ============================================
+        
+        /** @type {string} Sección activa actual */
         let activeSection = "personal";
+        
+        /** @type {boolean} Estado de carga durante peticiones */
         let loading = false;
+        
+        /** @type {boolean} Estado de carga inicial de datos */
         let loadingData = true;
 
-        // Estados para los formularios
+        /** @type {Object} Datos personales del usuario */
         let personalData = {
             nombres: "",
             apellidos: "",
             edad: ""
         };
 
+        /** @type {Object} Datos de cuenta del usuario */
         let cuentaData = {
             email: "",
             fechaCreacion: ""
         };
 
+        /** @type {Object} Caché de referencias DOM */
         const elements = {};
 
+        // ============================================
+        // INICIALIZACIÓN DE ELEMENTOS DOM
+        // ============================================
+
+        /**
+         * Cachea todas las referencias a elementos DOM
+         */
         function initializeElements() {
-            // Elementos principales
             elements.loadingContainer = document.getElementById('loading-container');
             elements.profileContainer = document.getElementById('profile-container');
             elements.errorMessage = document.getElementById('error-message');
             elements.successMessage = document.getElementById('success-message');
             elements.topbarUsername = document.getElementById('topbar-username');
             
-            // Navegación
             elements.navPersonal = document.getElementById('nav-personal');
             elements.navCuenta = document.getElementById('nav-cuenta');
             elements.navSeguridad = document.getElementById('nav-seguridad');
             elements.navLogout = document.getElementById('nav-logout');
             
-            // Secciones
             elements.sectionPersonal = document.getElementById('section-personal');
             elements.sectionCuenta = document.getElementById('section-cuenta');
             elements.sectionSeguridad = document.getElementById('section-seguridad');
             
-            // Formularios
             elements.formPersonal = document.getElementById('form-personal');
             elements.formCuenta = document.getElementById('form-cuenta');
             elements.formSeguridad = document.getElementById('form-seguridad');
             
-            // Botones
             elements.btnPersonal = document.getElementById('btn-personal');
             elements.btnCuenta = document.getElementById('btn-cuenta');
             elements.btnSeguridad = document.getElementById('btn-seguridad');
             elements.btnDeleteAccount = document.getElementById('btn-delete-account');
             
-            // Inputs
             elements.inputNombres = document.getElementById('input-nombres');
             elements.inputApellidos = document.getElementById('input-apellidos');
             elements.inputEdad = document.getElementById('input-edad');
@@ -313,6 +329,16 @@
             elements.inputConfirmPassword = document.getElementById('input-confirm-password');
         }
 
+        // ============================================
+        // GESTIÓN DE MENSAJES
+        // ============================================
+
+        /**
+         * Muestra mensaje de éxito o error al usuario
+         * @param {'error'|'success'} type - Tipo de mensaje
+         * @param {string} message - Texto del mensaje
+         * @param {number} duration - Duración en ms (0 = permanente)
+         */
         function showMessage(type, message, duration = 5000) {
             hideMessage('error');
             hideMessage('success');
@@ -328,6 +354,10 @@
             }
         }
 
+        /**
+         * Oculta mensaje de un tipo específico
+         * @param {'error'|'success'} type - Tipo de mensaje a ocultar
+         */
         function hideMessage(type) {
             const messageEl = elements[type + 'Message'];
             if (messageEl) {
@@ -335,6 +365,15 @@
             }
         }
 
+        // ============================================
+        // GESTIÓN DE ESTADO DE CARGA
+        // ============================================
+
+        /**
+         * Controla el estado de carga de un botón
+         * @param {HTMLElement} buttonElement - Botón a modificar
+         * @param {boolean} isLoading - Si está en estado de carga
+         */
         function setLoading(buttonElement, isLoading) {
             if (!buttonElement) return;
             
@@ -353,6 +392,14 @@
             }
         }
 
+        // ============================================
+        // NAVEGACIÓN ENTRE SECCIONES
+        // ============================================
+
+        /**
+         * Cambia la sección visible del perfil
+         * @param {'personal'|'cuenta'|'seguridad'} sectionName - Sección a mostrar
+         */
         function showSection(sectionName) {
             if (!elements.sectionPersonal || !elements.sectionCuenta || !elements.sectionSeguridad) {
                 return;
@@ -385,6 +432,14 @@
             hideMessage('success');
         }
 
+        // ============================================
+        // CARGA DE DATOS DEL USUARIO
+        // ============================================
+
+        /**
+         * Carga los datos del usuario desde el API
+         * @async
+         */
         async function cargarDatosUsuario() {
             const token = localStorage.getItem('token');
             if (!token) {
@@ -476,6 +531,9 @@
             }
         }
 
+        /**
+         * Actualiza los inputs de formularios con datos cargados
+         */
         function updateFormInputs() {
             if (elements.inputNombres) elements.inputNombres.value = personalData.nombres;
             if (elements.inputApellidos) elements.inputApellidos.value = personalData.apellidos;
@@ -484,6 +542,18 @@
             if (elements.inputFecha) elements.inputFecha.value = cuentaData.fechaCreacion;
         }
 
+        // ============================================
+        // PETICIONES AL API
+        // ============================================
+
+        /**
+         * Realiza petición PUT al API con autenticación
+         * @async
+         * @param {string} endpoint - Ruta del endpoint (ej: '/users/me')
+         * @param {Object} data - Datos a enviar
+         * @param {boolean} isPasswordChange - Si es cambio de contraseña
+         * @returns {Promise<Object|null>} Respuesta parseada o null
+         */
         async function makeRequest(endpoint, data, isPasswordChange = false) {
             const token = localStorage.getItem('token');
             if (!token) {
@@ -531,6 +601,13 @@
             }
         }
 
+        // ============================================
+        // EVENT LISTENERS
+        // ============================================
+
+        /**
+         * Configura todos los event listeners de la página
+         */
         function addEventListeners() {
             // Formulario personal
             if (elements.formPersonal) {
@@ -674,7 +751,10 @@
             }
         }
 
-        // Inicialización
+        // ============================================
+        // INICIALIZACIÓN
+        // ============================================
+
         document.addEventListener('DOMContentLoaded', function() {
             initializeElements();
             addEventListeners();

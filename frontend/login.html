@@ -187,10 +187,18 @@
     </div>
 
     <script>
-        // ====================================================
-        // SISTEMA DE NAVEGACIÓN SIMPLE
-        // ====================================================
-        
+        /**
+         * @fileoverview Página de inicio de sesión de CheckNote
+         * @author CheckNote Team
+         * @version 1.0.0
+         */
+
+        // === NAVEGACIÓN ===
+
+        /**
+         * Navega a una ruta específica
+         * @param {string} route - Ruta de destino
+         */
         function navigateTo(route) {
             const routes = {
                 '/home': 'home.html',
@@ -209,10 +217,11 @@
             }
         }
 
-        // ====================================================
-        // SISTEMA DE VALIDACIÓN MEJORADO
-        // ====================================================
-        
+        // === SISTEMA DE VALIDACIÓN ===
+
+        /**
+         * Clase para validar datos de login y manejar rate limiting
+         */
         class LoginValidator {
             constructor() {
                 this.emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -221,6 +230,9 @@
                 this.resetRateLimit();
             }
 
+            /**
+             * Resetea el contador de intentos cada 5 minutos
+             */
             resetRateLimit() {
                 const now = Date.now();
                 const timeDiff = now - this.lastAttemptTime;
@@ -232,6 +244,11 @@
                 }
             }
 
+            /**
+             * Valida formato de email
+             * @param {string} email - Email a validar
+             * @returns {Object} Resultado de validación
+             */
             validateEmail(email) {
                 const trimmed = email.trim();
                 
@@ -246,6 +263,11 @@
                 return { valid: true, value: trimmed.toLowerCase() };
             }
 
+            /**
+             * Valida contraseña
+             * @param {string} password - Contraseña a validar
+             * @returns {Object} Resultado de validación
+             */
             validatePassword(password) {
                 if (!password) {
                     return { valid: false, message: 'La contraseña es obligatoria' };
@@ -258,10 +280,17 @@
                 return { valid: true, value: password };
             }
 
+            /**
+             * Verifica si se puede intentar login
+             * @returns {boolean} Si puede intentar login
+             */
             canAttemptLogin() {
                 return this.rateLimitCount < 5;
             }
 
+            /**
+             * Registra un intento de login
+             */
             recordAttempt() {
                 this.rateLimitCount++;
                 this.lastAttemptTime = Date.now();
@@ -269,6 +298,9 @@
                 localStorage.setItem('lastLoginAttempt', this.lastAttemptTime.toString());
             }
 
+            /**
+             * Muestra advertencia de rate limiting
+             */
             showRateLimitWarning() {
                 if (this.rateLimitCount >= 3) {
                     const warning = document.getElementById('rate-limit-warning');
@@ -278,10 +310,13 @@
             }
         }
 
-        // ====================================================
-        // UI HELPER FUNCTIONS - CORREGIDAS
-        // ====================================================
-        
+        // === FUNCIONES DE UI ===
+
+        /**
+         * Muestra error en un campo específico
+         * @param {string} fieldId - ID del campo
+         * @param {string} message - Mensaje de error
+         */
         function showFieldError(fieldId, message) {
             const group = document.getElementById(`${fieldId}-group`);
             const errorDiv = document.getElementById(`${fieldId}-error`);
@@ -291,6 +326,10 @@
             errorDiv.classList.add('show');
         }
 
+        /**
+         * Limpia error de un campo
+         * @param {string} fieldId - ID del campo
+         */
         function clearFieldError(fieldId) {
             const group = document.getElementById(`${fieldId}-group`);
             const errorDiv = document.getElementById(`${fieldId}-error`);
@@ -299,8 +338,14 @@
             errorDiv.classList.remove('show');
         }
 
+        /**
+         * Muestra mensaje de sistema
+         * @param {string} type - Tipo de mensaje ('success' o 'error')
+         * @param {string} message - Mensaje a mostrar
+         * @param {number} duration - Duración en ms (0 = permanente)
+         */
         function showMessage(type, message, duration = 0) {
-            console.log(`Mostrando mensaje ${type}:`, message); // Debug
+            console.log(`Mostrando mensaje ${type}:`, message);
             const messageDiv = document.getElementById(`${type}-message`);
             
             if (!messageDiv) {
@@ -320,6 +365,10 @@
             }
         }
 
+        /**
+         * Oculta mensaje de sistema
+         * @param {string} type - Tipo de mensaje
+         */
         function hideMessage(type) {
             const messageDiv = document.getElementById(`${type}-message`);
             if (messageDiv) {
@@ -327,6 +376,11 @@
             }
         }
 
+        /**
+         * Controla estado de carga del botón
+         * @param {HTMLElement} button - Elemento botón
+         * @param {boolean} loading - Estado de carga
+         */
         function setButtonLoading(button, loading) {
             if (loading) {
                 button.classList.add('loading');
@@ -337,10 +391,8 @@
             }
         }
 
-        // ====================================================
-        // MAIN LOGIN LOGIC - CON MANEJO DE ERRORES MEJORADO
-        // ====================================================
-        
+        // === INICIALIZACIÓN ===
+
         document.addEventListener('DOMContentLoaded', function() {
             // Verificar mensaje de registro exitoso
             const registroExitoso = sessionStorage.getItem('registroExitoso');
@@ -349,7 +401,7 @@
                 sessionStorage.removeItem('registroExitoso');
             }
 
-            // Verificar si ya está logueado
+            // Verificar sesión existente
             const token = localStorage.getItem('token');
             const user = localStorage.getItem('user');
             
@@ -359,12 +411,15 @@
                 return;
             }
 
+            // Inicializar componentes
             const validator = new LoginValidator();
             const form = document.getElementById('login-form');
             const loginBtn = document.getElementById('login-btn');
             const emailInput = document.getElementById('correo');
             const passwordInput = document.getElementById('contrasena');
             const togglePassword = document.getElementById('toggle-password');
+
+            // === EVENT LISTENERS ===
 
             // Toggle mostrar/ocultar contraseña
             togglePassword.addEventListener('click', function() {
@@ -374,7 +429,7 @@
                 this.setAttribute('aria-label', isPassword ? 'Ocultar contraseña' : 'Mostrar contraseña');
             });
 
-            // Validación en tiempo real
+            // Validación en tiempo real - Email
             emailInput.addEventListener('blur', function() {
                 const result = validator.validateEmail(this.value);
                 if (!result.valid) {
@@ -390,6 +445,7 @@
                 }
             });
 
+            // Validación en tiempo real - Contraseña
             passwordInput.addEventListener('blur', function() {
                 const result = validator.validatePassword(this.value);
                 if (!result.valid) {
@@ -405,7 +461,8 @@
                 }
             });
 
-            // Manejar envío del formulario - MEJORADO
+            // === ENVÍO DEL FORMULARIO ===
+
             form.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
@@ -446,7 +503,7 @@
                 setButtonLoading(loginBtn, true);
 
                 try {
-                    console.log('Intentando login con:', emailResult.value); // Debug
+                    console.log('Intentando login con:', emailResult.value);
                     
                     const response = await fetch("https://checknote-27fe.onrender.com/api/v1/auth/login", {
                         method: "POST",
@@ -459,7 +516,7 @@
                         }),
                     });
 
-                    console.log('Response status:', response.status); // Debug
+                    console.log('Response status:', response.status);
 
                     if (!response.ok) {
                         // Registrar intento fallido
@@ -470,9 +527,9 @@
                         
                         try {
                             const errorData = await response.json();
-                            console.log('Error data:', errorData); // Debug
+                            console.log('Error data:', errorData);
                             
-                            // Mensajes específicos según el error y status code
+                            // Mensajes específicos según el error
                             if (response.status === 401) {
                                 errorMsg = "Email o contraseña incorrectos";
                             } else if (response.status === 400) {
@@ -495,7 +552,7 @@
                     }
 
                     const loginData = await response.json();
-                    console.log('Login data:', loginData); // Debug
+                    console.log('Login data:', loginData);
                     
                     const token = loginData.data?.token || loginData.token;
                     const user = loginData.data?.usuario || loginData.data?.user || loginData.user;
@@ -508,7 +565,7 @@
                     localStorage.removeItem('loginAttempts');
                     localStorage.removeItem('lastLoginAttempt');
 
-                    // Guardar datos
+                    // Guardar datos de sesión
                     localStorage.setItem('token', token);
                     localStorage.setItem('user', JSON.stringify(user));
                     localStorage.setItem('userId', user._id || user.id); 
@@ -516,7 +573,7 @@
 
                     showMessage('success', '¡Inicio de sesión exitoso! Redirigiendo...', 2000);
                     
-                    // Redirigir
+                    // Redirigir al dashboard
                     setTimeout(() => {
                         navigateTo('/home');
                     }, 1000);

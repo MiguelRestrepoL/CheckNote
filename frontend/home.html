@@ -168,18 +168,28 @@
     </div>
 
     <script>
-        // Variables globales
+        /**
+         * @fileoverview Dashboard principal de CheckNote - Gestiona la visualización Kanban de tareas
+         * @author CheckNote Team
+         * @version 1.0.0
+         */
+
+        // === VARIABLES GLOBALES ===
+        
+        /** @type {Object} Objeto que organiza las tareas por estado */
         let tareas = {
             pendiente: [],
             en_progreso: [],
             terminada: []
         };
+
+        /** @type {boolean} Estado de carga de datos */
         let loading = true;
 
-        // Detectar ambiente de desarrollo
+        /** @type {boolean} Detecta si está en desarrollo */
         const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
-        // Referencias DOM
+        /** @type {Object} Referencias a elementos DOM */
         const elements = {
             username: document.getElementById('username'),
             successMessage: document.getElementById('success-message'),
@@ -202,7 +212,14 @@
             terminadasTasks: document.getElementById('terminadas-tasks')
         };
 
-        // Función para mostrar mensajes
+        // === FUNCIONES DE UI ===
+
+        /**
+         * Muestra mensajes de éxito o error en la interfaz
+         * @param {string} type - Tipo de mensaje ('success' o 'error')
+         * @param {string} message - Mensaje a mostrar
+         * @param {number} [duration=0] - Duración en ms (0 = permanente)
+         */
         function showMessage(type, message, duration = 0) {
             const messageEl = elements[type + 'Message'];
             if (messageEl) {
@@ -219,6 +236,10 @@
             }
         }
 
+        /**
+         * Oculta mensajes de la interfaz
+         * @param {string} type - Tipo de mensaje a ocultar
+         */
         function hideMessage(type) {
             const messageEl = elements[type + 'Message'];
             if (messageEl) {
@@ -226,7 +247,9 @@
             }
         }
 
-        // Función para actualizar debug info
+        /**
+         * Actualiza información de debug (solo en desarrollo)
+         */
         function updateDebugInfo() {
             if (isDevelopment) {
                 elements.debugInfo.classList.remove('hidden');
@@ -238,7 +261,13 @@
             }
         }
 
-        // Función para obtener clase de prioridad
+        // === FUNCIONES DE DATOS ===
+
+        /**
+         * Obtiene la clase CSS según la prioridad de la tarea
+         * @param {string} prioridad - Prioridad de la tarea
+         * @returns {string} Clase CSS correspondiente
+         */
         function getPriorityClass(prioridad) {
             switch(prioridad?.toLowerCase()) {
                 case 'alta': return 'priority-alta';
@@ -248,14 +277,23 @@
             }
         }
 
-        // Función para escapar HTML
+        /**
+         * Escapa caracteres HTML para prevenir XSS
+         * @param {string} text - Texto a escapar
+         * @returns {string} Texto escapado
+         */
         function escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
         }
 
-        // Función para redirigir a editar tarea
+        // === FUNCIONES DE NAVEGACIÓN ===
+
+        /**
+         * Redirige a la página de edición de tarea
+         * @param {Object} tarea - Objeto de tarea a editar
+         */
         function editarTarea(tarea) {
             console.log('Editando tarea:', tarea);
             // Guardar datos en localStorage para acceso seguro
@@ -265,7 +303,10 @@
             window.location.href = 'editar-tarea.html';
         }
 
-        // Función para redirigir a eliminar tarea
+        /**
+         * Redirige a la página de eliminación de tarea
+         * @param {Object} tarea - Objeto de tarea a eliminar
+         */
         function eliminarTarea(tarea) {
             console.log('Eliminando tarea:', tarea);
             // Guardar datos en localStorage para acceso seguro
@@ -275,7 +316,24 @@
             window.location.href = 'eliminar-tarea.html';
         }
 
-        // Función para renderizar tareas con botones de acción
+        /**
+         * Fuerza un nuevo login removiendo datos locales
+         */
+        function forzarNuevoLogin() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            localStorage.removeItem('userId');
+            localStorage.removeItem('userName');
+            window.location.href = 'login.html';
+        }
+
+        // === FUNCIONES DE RENDERIZADO ===
+
+        /**
+         * Renderiza lista de tareas en el contenedor especificado
+         * @param {Array} listaTareas - Array de objetos tarea
+         * @param {HTMLElement} containerElement - Elemento contenedor
+         */
         function renderTareas(listaTareas, containerElement) {
             if (loading) {
                 containerElement.innerHTML = `
@@ -315,7 +373,7 @@
                 `;
             }).join('');
 
-            // Agregar event listeners a los botones recién creados
+            // Agregar event listeners a botones de acción
             const editButtons = containerElement.querySelectorAll('[data-action="edit"]');
             const deleteButtons = containerElement.querySelectorAll('[data-action="delete"]');
 
@@ -338,7 +396,9 @@
             });
         }
 
-        // Función para actualizar UI
+        /**
+         * Actualiza toda la interfaz con los datos actuales
+         */
         function updateUI() {
             const totalTareas = tareas.pendiente.length + tareas.en_progreso.length + tareas.terminada.length;
             const tareasCompletadas = tareas.terminada.length;
@@ -349,12 +409,12 @@
             elements.enProgresoCount.textContent = tareas.en_progreso.length;
             elements.terminadasCount.textContent = tareas.terminada.length;
 
-            // Actualizar progreso
+            // Actualizar barra de progreso
             elements.progressBar.style.width = `${porcentajeProgreso}%`;
             elements.progressPercentage.textContent = `${porcentajeProgreso}% completado`;
             elements.progressTasks.textContent = `${tareasCompletadas} de ${totalTareas} tareas ✅`;
 
-            // Actualizar subtítulo
+            // Actualizar subtítulo según el estado
             if (loading) {
                 elements.taskSubtitle.textContent = "Cargando tus tareas...";
             } else if (!elements.errorMessage.classList.contains('hidden')) {
@@ -372,16 +432,13 @@
             updateDebugInfo();
         }
 
-        // Función para forzar nuevo login
-        function forzarNuevoLogin() {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            localStorage.removeItem('userId');
-            localStorage.removeItem('userName');
-            window.location.href = 'login.html';
-        }
+        // === FUNCIONES DE API ===
 
-        // Función para cargar tareas
+        /**
+         * Carga tareas desde el servidor
+         * @async
+         * @function
+         */
         async function cargarTareas() {
             const token = localStorage.getItem('token');
             
@@ -472,15 +529,20 @@
             }
         }
 
-        // Event listeners
+        // === EVENT LISTENERS ===
+
         elements.retryBtn.addEventListener('click', cargarTareas);
         elements.newLoginBtn.addEventListener('click', forzarNuevoLogin);
 
-        // Inicialización al cargar la página
+        // === INICIALIZACIÓN ===
+
+        /**
+         * Inicializa la aplicación al cargar el DOM
+         */
         document.addEventListener('DOMContentLoaded', function() {
             console.log('DOM loaded, inicializando...');
             
-            // Verificar si hay mensaje de éxito del login, edición o eliminación
+            // Verificar mensajes de sesión
             const loginSuccess = sessionStorage.getItem('loginExitoso');
             const editSuccess = sessionStorage.getItem('tareaEditadaExito');
             const deleteSuccess = sessionStorage.getItem('tareaEliminadaExito');
@@ -516,7 +578,7 @@
             updateDebugInfo();
         });
 
-        // Hacer las funciones globales para usar en onclick (backup)
+        // Hacer funciones globales disponibles (backup para onclick)
         window.editarTarea = editarTarea;
         window.eliminarTarea = eliminarTarea;
     </script>

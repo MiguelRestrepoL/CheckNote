@@ -109,11 +109,57 @@
     </div>
 
     <script>
+        /**
+         * @fileoverview Página de eliminación de tareas para la aplicación CheckNote.
+         * Permite a los usuarios confirmar la eliminación permanente de una tarea específica.
+         * @author CheckNote Team
+         * @version 1.0.0
+         */
+
+        /**
+         * @typedef {Object} Tarea
+         * @property {string} id - Identificador único de la tarea
+         * @property {string} _id - Identificador alternativo de MongoDB
+         * @property {string} titulo - Título de la tarea
+         * @property {string} descripcion - Descripción detallada de la tarea
+         * @property {('alta'|'media'|'baja')} prioridad - Nivel de prioridad de la tarea
+         * @property {('pendiente'|'en_progreso'|'terminada')} estado - Estado actual de la tarea
+         */
+
+        /**
+         * @typedef {Object} UrlParams
+         * @property {string|null} id - ID de la tarea desde la URL
+         * @property {string|null} titulo - Título de la tarea desde la URL
+         * @property {string|null} descripcion - Descripción de la tarea desde la URL
+         * @property {string|null} estado - Estado de la tarea desde la URL
+         * @property {string|null} prioridad - Prioridad de la tarea desde la URL
+         */
+
+        /**
+         * @typedef {Object} DOMElements
+         * @property {HTMLElement} loadingState - Elemento del estado de carga
+         * @property {HTMLElement} deleteContainer - Contenedor principal de eliminación
+         * @property {HTMLElement} errorMessage - Elemento para mostrar mensajes de error
+         * @property {HTMLElement} successMessage - Elemento para mostrar mensajes de éxito
+         * @property {HTMLElement} taskTitle - Elemento del título de la tarea
+         * @property {HTMLElement} taskDescription - Elemento de la descripción de la tarea
+         * @property {HTMLElement} taskPriority - Elemento de la prioridad de la tarea
+         * @property {HTMLElement} taskStatus - Elemento del estado de la tarea
+         * @property {HTMLButtonElement} deleteBtn - Botón de confirmar eliminación
+         * @property {HTMLElement} username - Elemento del nombre de usuario
+         */
+
         // Variables globales
+        /** @type {Tarea|null} - Datos de la tarea actual a eliminar */
         let tareaActual = null;
+
+        /** @type {string|null} - ID de la tarea actual */
         let tareaId = null;
 
-        // Referencias DOM
+        /**
+         * Referencias a elementos del DOM
+         * @type {DOMElements}
+         */
         const elements = {
             loadingState: document.getElementById('loading-state'),
             deleteContainer: document.getElementById('delete-container'),
@@ -127,7 +173,17 @@
             username: document.getElementById('username')
         };
 
-        // Función para mostrar mensajes
+        /**
+         * Muestra un mensaje de estado al usuario
+         * @param {('error'|'success')} type - Tipo de mensaje a mostrar
+         * @param {string} message - Contenido del mensaje
+         * @param {number} [duration=0] - Duración en ms para auto-ocultar (0 = no auto-ocultar)
+         * @returns {void}
+         * 
+         * @example
+         * showMessage('error', 'Error al cargar datos', 5000);
+         * showMessage('success', 'Operación exitosa');
+         */
         function showMessage(type, message, duration = 0) {
             const messageEl = elements[type + 'Message'];
             if (messageEl) {
@@ -140,6 +196,14 @@
             }
         }
 
+        /**
+         * Oculta un mensaje de estado específico
+         * @param {('error'|'success')} type - Tipo de mensaje a ocultar
+         * @returns {void}
+         * 
+         * @example
+         * hideMessage('error');
+         */
         function hideMessage(type) {
             const messageEl = elements[type + 'Message'];
             if (messageEl) {
@@ -147,7 +211,16 @@
             }
         }
 
-        // Función para obtener parámetros de la URL
+        /**
+         * Extrae parámetros de la URL actual
+         * @returns {UrlParams} Objeto con los parámetros extraídos de la URL
+         * 
+         * @example
+         * // URL: eliminar-tarea.html?id=123&titulo=Mi%20Tarea
+         * const params = getUrlParams();
+         * console.log(params.id); // "123"
+         * console.log(params.titulo); // "Mi Tarea"
+         */
         function getUrlParams() {
             const urlParams = new URLSearchParams(window.location.search);
             return {
@@ -159,7 +232,16 @@
             };
         }
 
-        // Función para cargar datos de la tarea
+        /**
+         * Carga los datos de la tarea a eliminar desde localStorage o URL
+         * Prioriza datos de localStorage sobre parámetros de URL
+         * @returns {void}
+         * 
+         * @throws {Error} Si no se encuentran datos de la tarea
+         * 
+         * @example
+         * cargarDatosTarea(); // Carga automáticamente desde la fuente disponible
+         */
         function cargarDatosTarea() {
             try {
                 // Intentar obtener datos desde localStorage (preferido)
@@ -190,7 +272,21 @@
             }
         }
 
-        // Función para mostrar la información de la tarea
+        /**
+         * Muestra la información de la tarea en la interfaz
+         * @param {Tarea|UrlParams} tarea - Objeto con los datos de la tarea
+         * @returns {void}
+         * 
+         * @example
+         * const tarea = {
+         *   id: '123',
+         *   titulo: 'Mi Tarea',
+         *   descripcion: 'Descripción de la tarea',
+         *   prioridad: 'alta',
+         *   estado: 'pendiente'
+         * };
+         * mostrarTarea(tarea);
+         */
         function mostrarTarea(tarea) {
             try {
                 // Guardar referencia a la tarea y su ID
@@ -229,7 +325,18 @@
             }
         }
 
-        // Función para eliminar tarea - CORREGIDA
+        /**
+         * Elimina permanentemente la tarea actual del servidor
+         * Realiza validaciones de autenticación y maneja errores de red
+         * @async
+         * @returns {Promise<void>}
+         * 
+         * @throws {Error} Si hay problemas de red o el servidor responde con error
+         * 
+         * @example
+         * // Se ejecuta al hacer clic en el botón de confirmar eliminación
+         * await eliminarTarea();
+         */
         async function eliminarTarea() {
             if (!tareaId) {
                 showMessage('error', 'No se puede eliminar: ID de tarea no válido');
@@ -244,14 +351,14 @@
             }
 
             try {
-                // Deshabilitar botón
+                // Deshabilitar botón durante la operación
                 elements.deleteBtn.disabled = true;
                 elements.deleteBtn.textContent = '🗑️ Eliminando...';
                 hideMessage('error');
 
                 console.log('Eliminando tarea con ID:', tareaId);
 
-                // CORREGIDO: Usar el mismo endpoint que editar-tarea pero con DELETE
+                // Realizar petición DELETE al servidor
                 const response = await fetch(`https://checknote-27fe.onrender.com/api/v1/tasks/${tareaId}`, {
                     method: 'DELETE',
                     headers: {
@@ -261,6 +368,7 @@
                 });
 
                 if (!response.ok) {
+                    // Manejar error de autenticación
                     if (response.status === 401) {
                         localStorage.removeItem('token');
                         localStorage.removeItem('user');
@@ -290,39 +398,89 @@
                 console.error('Error eliminando tarea:', error);
                 showMessage('error', 'Error al eliminar la tarea: ' + error.message);
             } finally {
-                // Rehabilitar botón
+                // Rehabilitar botón independientemente del resultado
                 elements.deleteBtn.disabled = false;
                 elements.deleteBtn.textContent = '🗑️ Confirmar Eliminación';
             }
         }
 
-        // Event listeners
-        elements.deleteBtn.addEventListener('click', eliminarTarea);
-
-        // Inicialización
-        document.addEventListener('DOMContentLoaded', function() {
-            // Verificar autenticación
+        /**
+         * Verifica la autenticación del usuario
+         * Comprueba si existe un token válido en localStorage
+         * @returns {boolean} true si el usuario está autenticado, false en caso contrario
+         * 
+         * @example
+         * if (!verificarAutenticacion()) {
+         *   // Redirigir al login
+         * }
+         */
+        function verificarAutenticacion() {
             const token = localStorage.getItem('token');
             if (!token) {
                 showMessage('error', 'No hay sesión activa. Redirigiendo al login...');
                 setTimeout(() => window.location.href = 'login.html', 2000);
-                return;
+                return false;
             }
+            return true;
+        }
 
-            // Cargar datos del usuario
+        /**
+         * Carga y muestra los datos del usuario en la interfaz
+         * Obtiene la información del usuario desde localStorage
+         * @returns {void}
+         * 
+         * @example
+         * cargarDatosUsuario(); // Muestra el nombre de usuario en la topbar
+         */
+        function cargarDatosUsuario() {
             const storedUser = localStorage.getItem('user');
             if (storedUser) {
                 try {
                     const user = JSON.parse(storedUser);
                     elements.username.textContent = user.nombres || 'Usuario';
                 } catch (e) {
+                    console.error('Error parsing user data:', e);
                     elements.username.textContent = 'Usuario';
                 }
+            } else {
+                elements.username.textContent = 'Usuario';
+            }
+        }
+
+        /**
+         * Inicializa la aplicación cuando el DOM está completamente cargado
+         * Configura event listeners y carga los datos iniciales
+         * @returns {void}
+         * 
+         * @example
+         * // Se ejecuta automáticamente cuando el DOM está listo
+         * document.addEventListener('DOMContentLoaded', inicializarApp);
+         */
+        function inicializarApp() {
+            // Verificar autenticación
+            if (!verificarAutenticacion()) {
+                return;
             }
 
-            // Cargar datos de la tarea
-            setTimeout(cargarDatosTarea, 500); // Pequeño delay para mostrar loading
-        });
+            // Cargar datos del usuario
+            cargarDatosUsuario();
+
+            // Cargar datos de la tarea con un pequeño delay para mostrar el loading
+            setTimeout(cargarDatosTarea, 500);
+        }
+
+        // Event listeners
+        /**
+         * Event listener para el botón de eliminar tarea
+         * @listens click
+         */
+        elements.deleteBtn.addEventListener('click', eliminarTarea);
+
+        /**
+         * Inicialización de la aplicación
+         * @listens DOMContentLoaded
+         */
+        document.addEventListener('DOMContentLoaded', inicializarApp);
     </script>
 </body>
 </html>

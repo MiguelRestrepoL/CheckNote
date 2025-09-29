@@ -164,7 +164,40 @@
     </div>
 
     <script>
-        // Estado global
+        /**
+         * @file crear-tarea.html
+         * @description Página para crear nuevas tareas en CheckNote.
+         *              Permite al usuario ingresar todos los detalles de una tarea
+         *              (título, descripción, fecha, hora, estado, prioridad) y
+         *              enviarla al backend para su persistencia.
+         * @requires GlobalCSS2.css
+         * @author Equipo CheckNote
+         * @version 1.0.0
+         */
+
+        /**
+         * @typedef {Object} FormData
+         * @description Estructura de datos del formulario de tarea
+         * @property {string} titulo - Título de la tarea
+         * @property {string} descripcion - Descripción detallada de la tarea
+         * @property {string} fechaVencimiento - Fecha límite en formato YYYY-MM-DD
+         * @property {string} hora - Hora límite en formato HH:MM
+         * @property {('baja'|'media'|'alta')} prioridad - Nivel de prioridad de la tarea
+         * @property {('pendiente'|'en_progreso'|'terminada')} estado - Estado actual de la tarea
+         * @property {boolean} completada - Indica si la tarea está marcada como completada
+         */
+
+        /**
+         * @typedef {Object} AppState
+         * @description Estado global de la aplicación
+         * @property {boolean} loading - Indica si hay una operación asíncrona en curso
+         * @property {FormData} formData - Datos actuales del formulario
+         */
+
+        /**
+         * Estado global de la aplicación
+         * @type {AppState}
+         */
         let appState = {
             loading: false,
             formData: {
@@ -179,22 +212,44 @@
         };
 
         // Referencias DOM
+        /** @type {HTMLFormElement} */
         const taskForm = document.getElementById('task-form');
+        /** @type {HTMLButtonElement} */
         const submitBtn = document.getElementById('submit-btn');
+        /** @type {HTMLDivElement} */
         const errorMessage = document.getElementById('error-message');
+        /** @type {HTMLDivElement} */
         const successMessage = document.getElementById('success-message');
+        /** @type {HTMLSpanElement} */
         const usernameSpan = document.getElementById('username');
 
         // Elementos del formulario
+        /** @type {HTMLInputElement} */
         const tituloInput = document.getElementById('titulo');
+        /** @type {HTMLTextAreaElement} */
         const descripcionTextarea = document.getElementById('descripcion');
+        /** @type {HTMLInputElement} */
         const fechaInput = document.getElementById('fechaVencimiento');
+        /** @type {HTMLInputElement} */
         const horaInput = document.getElementById('hora');
+        /** @type {HTMLSelectElement} */
         const prioridadSelect = document.getElementById('prioridad');
+        /** @type {HTMLSelectElement} */
         const estadoSelect = document.getElementById('estado');
+        /** @type {HTMLInputElement} */
         const completadaCheckbox = document.getElementById('completada');
 
-        // Función para mostrar mensajes
+        /**
+         * Muestra un mensaje de estado al usuario
+         * @param {('error'|'success')} type - Tipo de mensaje a mostrar
+         * @param {string} message - Texto del mensaje
+         * @param {number} [duration=0] - Duración en milisegundos antes de ocultar (0 = permanente)
+         * @returns {void}
+         * 
+         * @example
+         * showMessage('success', 'Tarea creada exitosamente', 3000);
+         * showMessage('error', 'El título es requerido');
+         */
         function showMessage(type, message, duration = 0) {
             const messageEl = type === 'error' ? errorMessage : successMessage;
             if (messageEl) {
@@ -207,6 +262,11 @@
             }
         }
 
+        /**
+         * Oculta un mensaje de estado
+         * @param {('error'|'success')} type - Tipo de mensaje a ocultar
+         * @returns {void}
+         */
         function hideMessage(type) {
             const messageEl = type === 'error' ? errorMessage : successMessage;
             if (messageEl) {
@@ -214,7 +274,13 @@
             }
         }
 
-        // Función para verificar autenticación
+        /**
+         * Verifica si el usuario está autenticado
+         * Comprueba la existencia de un token válido en localStorage.
+         * Si no existe, muestra un error y redirige al login.
+         * 
+         * @returns {boolean} true si el usuario está autenticado, false en caso contrario
+         */
         function checkAuth() {
             const token = localStorage.getItem('token');
             if (!token) {
@@ -225,7 +291,12 @@
             return true;
         }
 
-        // Función para actualizar estado del formulario
+        /**
+         * Actualiza el estado del formulario con los valores actuales de los inputs
+         * Lee todos los campos del formulario y los sincroniza con appState.formData
+         * 
+         * @returns {void}
+         */
         function updateFormState() {
             appState.formData = {
                 titulo: tituloInput.value,
@@ -238,7 +309,25 @@
             };
         }
 
-        // Función para manejar envío del formulario
+        /**
+         * Maneja el envío del formulario de creación de tarea
+         * Valida los datos, los formatea correctamente y realiza la petición POST al backend.
+         * 
+         * @async
+         * @param {Event} e - Evento de submit del formulario
+         * @returns {Promise<void>}
+         * @throws {Error} Si hay problemas con la autenticación o la petición al servidor
+         * 
+         * @description
+         * Proceso:
+         * 1. Previene el envío por defecto del formulario
+         * 2. Verifica autenticación (token y userId)
+         * 3. Valida campos requeridos
+         * 4. Combina fecha y hora en formato ISO 8601
+         * 5. Envía petición POST a /api/v1/tasks
+         * 6. Maneja respuesta exitosa o errores
+         * 7. Redirige al home tras éxito
+         */
         async function handleSubmit(e) {
             e.preventDefault();
 
@@ -300,7 +389,19 @@
                     fechaCompleta = new Date(`${appState.formData.fechaVencimiento}T23:59:00`).toISOString();
                 }
 
-                // Preparar datos para enviar
+                /**
+                 * @typedef {Object} TaskPayload
+                 * @description Payload para crear una tarea en el backend
+                 * @property {string} titulo - Título de la tarea
+                 * @property {string} descripcion - Descripción de la tarea
+                 * @property {string} prioridad - Prioridad: 'baja', 'media' o 'alta'
+                 * @property {string} estado - Estado: 'pendiente', 'en_progreso' o 'terminada'
+                 * @property {boolean} completada - Si la tarea está completada
+                 * @property {string} fechaVencimiento - Fecha en formato ISO 8601
+                 * @property {string} userId - ID del usuario propietario
+                 */
+
+                /** @type {TaskPayload} */
                 const taskData = {
                     titulo: appState.formData.titulo.trim(),
                     descripcion: appState.formData.descripcion.trim(),
@@ -383,7 +484,16 @@
             input.addEventListener('input', updateFormState);
         });
 
-        // Inicialización
+        /**
+         * Inicialización al cargar el DOM
+         * Configura el estado inicial de la página:
+         * - Verifica autenticación
+         * - Carga datos del usuario desde localStorage
+         * - Establece fecha mínima en el input de fecha
+         * - Inicializa el estado del formulario
+         * 
+         * @listens DOMContentLoaded
+         */
         document.addEventListener('DOMContentLoaded', function() {
             if (!checkAuth()) return;
             

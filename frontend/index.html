@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -51,91 +50,202 @@
     </div>
 
     <script>
-        // ===============================================
-        // ROUTER SIMPLIFICADO - SIN LOOPS
-        // ===============================================
-        
+        /**
+         * @fileoverview Router principal de CheckNote - Maneja la navegación y autenticación inicial
+         * @description Sistema de enrutamiento simplificado que gestiona la navegación entre páginas
+         * y verifica el estado de autenticación del usuario para redirigir apropiadamente
+         * @author CheckNote Team
+         * @version 2.0.0
+         * @since 1.0.0
+         */
+
         console.log('=== CheckNote Router Simplificado ===');
 
+        // ===============================================
+        // FUNCIONES DE AUTENTICACIÓN
+        // ===============================================
+
+        /**
+         * Verifica si el usuario está autenticado
+         * @description Comprueba la existencia de token y datos de usuario en localStorage
+         * @function isAuthenticated
+         * @returns {boolean} true si el usuario está autenticado, false en caso contrario
+         * @example
+         * if (isAuthenticated()) {
+         *     // Usuario logueado
+         * }
+         */
         function isAuthenticated() {
             const token = localStorage.getItem('token');
             const user = localStorage.getItem('user');
             return !!(token && user);
         }
-function redirectToLogin() {
-    console.log('Redirigiendo al login...');
-    window.location.href = '/login.html';  // ✅ apunta a raíz del build
-}
 
-function redirectToHome() {
-    console.log('Redirigiendo al home...');
-    window.location.href = '/home.html';   // igual desde raíz
-}
+        // ===============================================
+        // FUNCIONES DE REDIRECCIÓN
+        // ===============================================
 
-function redirectToRegistro() {
-    console.log('Redirigiendo al registro...');     
-    window.location.href = '/registro.html';  // ✅ apunta a raíz del build
-} 
+        /**
+         * Redirige al usuario a la página de login
+         * @description Navega a la página de inicio de sesión desde la raíz del build
+         * @function redirectToLogin
+         * @since 1.0.0
+         */
+        function redirectToLogin() {
+            console.log('Redirigiendo al login...');
+            window.location.href = '/login.html';
+        }
 
-function redirectToOlvidarPassword() {
-    console.log('Redirigiendo a olvidar contraseña...');    
-    window.location.href = '/olvidar-password1.html';  // ✅ apunta a raíz del build
-} 
+        /**
+         * Redirige al usuario a la página principal (dashboard)
+         * @description Navega al dashboard principal de la aplicación
+         * @function redirectToHome
+         * @since 1.0.0
+         */
+        function redirectToHome() {
+            console.log('Redirigiendo al home...');
+            window.location.href = '/home.html';
+        }
 
-function redirectToPerfil() {
-    console.log('Redirigiendo a perfil...');    
-    window.location.href = '/perfil.html';  // ✅ apunta a raíz del build
-} 
+        /**
+         * Redirige al usuario a la página de registro
+         * @description Navega al formulario de creación de cuenta
+         * @function redirectToRegistro
+         * @since 1.0.0
+         */
+        function redirectToRegistro() {
+            console.log('Redirigiendo al registro...');     
+            window.location.href = '/registro.html';
+        } 
 
-function redirectToOlvidarPassword2() {
-    console.log('Redirigiendo a olvidar contraseña paso 2...'); 
-    window.location.href = '/olvidar-password2.html';  // ✅ apunta a raíz del build
-} 
+        /**
+         * Redirige al usuario a la página de recuperación de contraseña (paso 1)
+         * @description Navega al primer paso del proceso de recuperación de contraseña
+         * @function redirectToOlvidarPassword
+         * @since 1.0.0
+         */
+        function redirectToOlvidarPassword() {
+            console.log('Redirigiendo a olvidar contraseña...');    
+            window.location.href = '/olvidar-password1.html';
+        } 
 
-function redirectToCrearTarea() {
-    console.log('Redirigiendo a crear tarea...');   
-    window.location.href = '/crear-tarea.html';  // ✅ apunta a raíz del build
-}
+        /**
+         * Redirige al usuario a la página de perfil
+         * @description Navega a la página de gestión del perfil de usuario
+         * @function redirectToPerfil
+         * @since 1.0.0
+         */
+        function redirectToPerfil() {
+            console.log('Redirigiendo a perfil...');    
+            window.location.href = '/perfil.html';
+        } 
 
-function redirectToEditarTarea() {
-    console.log('Redirigiendo a editar tarea...');      
-    window.location.href = '/editar-tarea.html';  // ✅ apunta a raíz del build
-}
+        /**
+         * Redirige al usuario a la página de recuperación de contraseña (paso 2)
+         * @description Navega al segundo paso del proceso de recuperación de contraseña
+         * @function redirectToOlvidarPassword2
+         * @since 1.1.0
+         */
+        function redirectToOlvidarPassword2() {
+            console.log('Redirigiendo a olvidar contraseña paso 2...'); 
+            window.location.href = '/olvidar-password2.html';
+        } 
 
-function redirectToEliminarTarea() {
-    console.log('Redirigiendo a eliminar tarea...');      
-    window.location.href = '/eliminar-tarea.html';  // ✅ apunta a raíz del build
-}
+        /**
+         * Redirige al usuario a la página de creación de tareas
+         * @description Navega al formulario de creación de nueva tarea
+         * @function redirectToCrearTarea
+         * @since 1.0.0
+         */
+        function redirectToCrearTarea() {
+            console.log('Redirigiendo a crear tarea...');   
+            window.location.href = '/crear-tarea.html';
+        }
 
-function redirectToEliminarCuenta() {
-    console.log('Redirigiendo a eliminar cuenta...');   
-    window.location.href = '/eliminar-cuenta.html';  // ✅ apunta a raíz del build
-}
+        /**
+         * Redirige al usuario a la página de edición de tareas
+         * @description Navega al formulario de edición de tarea existente
+         * @function redirectToEditarTarea
+         * @since 1.0.0
+         */
+        function redirectToEditarTarea() {
+            console.log('Redirigiendo a editar tarea...');      
+            window.location.href = '/editar-tarea.html';
+        }
 
-function redirectToSobreNosotros() {
-    console.log('Redirigiendo a sobre nosotros...');   
-    window.location.href = '/sobre-nosotros.html';  // ✅ apunta a raíz del build
-}   
+        /**
+         * Redirige al usuario a la página de eliminación de tareas
+         * @description Navega a la página de confirmación de eliminación de tarea
+         * @function redirectToEliminarTarea
+         * @since 1.0.0
+         */
+        function redirectToEliminarTarea() {
+            console.log('Redirigiendo a eliminar tarea...');      
+            window.location.href = '/eliminar-tarea.html';
+        }
 
+        /**
+         * Redirige al usuario a la página de eliminación de cuenta
+         * @description Navega a la página de confirmación de eliminación de cuenta de usuario
+         * @function redirectToEliminarCuenta
+         * @since 1.2.0
+         */
+        function redirectToEliminarCuenta() {
+            console.log('Redirigiendo a eliminar cuenta...');   
+            window.location.href = '/eliminar-cuenta.html';
+        }
 
+        /**
+         * Redirige al usuario a la página "Sobre Nosotros"
+         * @description Navega a la página informativa de la aplicación
+         * @function redirectToSobreNosotros
+         * @since 1.0.0
+         */
+        function redirectToSobreNosotros() {
+            console.log('Redirigiendo a sobre nosotros...');   
+            window.location.href = '/sobre-nosotros.html';
+        }   
 
-        // Función global para redirigir a cualquier ruta
+        // ===============================================
+        // FUNCIONES GLOBALES DE NAVEGACIÓN
+        // ===============================================
+
+        /**
+         * Función global para navegación programática
+         * @description Permite navegar a cualquier ruta definida en la aplicación
+         * @function navigateTo
+         * @global
+         * @param {string} route - Ruta de destino (ej: '/login', '/home')
+         * @example
+         * // Navegar al login
+         * navigateTo('/login');
+         * 
+         * // Navegar al dashboard
+         * navigateTo('/home');
+         * @since 2.0.0
+         */
         window.navigateTo = function(route) {
             console.log('Navegando a:', route);
 
-const routes = {
-    '/login': '/login.html',
-    '/registro': '/registro.html',
-    '/home': '/home.html',
-    '/olvidar-password': '/olvidar-password1.html',
-    '/perfil': '/perfil.html',
-    '/olvidar-password2': '/olvidar-password2.html',
-    '/crear-tarea': '/crear-tarea.html',
-    '/editar-tarea': '/editar-tarea.html',
-    '/eliminar-tarea': '/eliminar-tarea.html',
-    '/eliminar-cuenta': '/eliminar-cuenta.html',
-    '/sobre-nosotros': '/sobre-nosotros.html'
-};
+            /**
+             * @type {Object.<string, string>} Mapa de rutas disponibles
+             * @description Define las rutas lógicas y sus archivos HTML correspondientes
+             */
+            const routes = {
+                '/login': '/login.html',
+                '/registro': '/registro.html',
+                '/home': '/home.html',
+                '/olvidar-password': '/olvidar-password1.html',
+                '/perfil': '/perfil.html',
+                '/olvidar-password2': '/olvidar-password2.html',
+                '/crear-tarea': '/crear-tarea.html',
+                '/editar-tarea': '/editar-tarea.html',
+                '/eliminar-tarea': '/eliminar-tarea.html',
+                '/eliminar-cuenta': '/eliminar-cuenta.html',
+                '/sobre-nosotros': '/sobre-nosotros.html'
+            };
+
+            // Normalizar ruta (agregar '/' al inicio si no lo tiene)
             if (!route.startsWith('/')) {
                 route = '/' + route;
             }
@@ -148,8 +258,18 @@ const routes = {
             }
         };
 
-        // Función global para logout
+        /**
+         * Función global para cerrar sesión
+         * @description Limpia todos los datos de sesión y redirige al login
+         * @function logout
+         * @global
+         * @example
+         * // Cerrar sesión del usuario
+         * logout();
+         * @since 1.0.0
+         */
         window.logout = function() {
+            // Limpiar todos los datos de sesión
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             localStorage.removeItem('userId');
@@ -159,17 +279,32 @@ const routes = {
             redirectToLogin();
         };
 
-        // Lógica principal - SOLO al cargar index.html
+        // ===============================================
+        // LÓGICA PRINCIPAL DE INICIALIZACIÓN
+        // ===============================================
+
+        /**
+         * Inicializa el router principal de la aplicación
+         * @description Se ejecuta cuando el DOM está completamente cargado.
+         * Verifica si estamos en la página principal y redirige según el estado de autenticación.
+         * Solo actúa cuando se accede directamente a index.html para evitar loops de redirección.
+         * @event DOMContentLoaded
+         * @since 1.0.0
+         */
         document.addEventListener('DOMContentLoaded', function() {
             console.log('CheckNote Router iniciado');
             console.log('URL actual:', window.location.href);
             console.log('Pathname:', window.location.pathname);
 
-            // Solo ejecutar si estamos en index.html (página principal)
+            /**
+             * @type {boolean} Indica si estamos en la página principal
+             * @description Verifica múltiples variantes del path principal para mayor compatibilidad
+             */
             const isMainPage = window.location.pathname === '/' || 
                               window.location.pathname === '/index.html' ||
                               window.location.pathname.endsWith('/');
 
+            // Solo ejecutar redirección si estamos en la página principal
             if (!isMainPage) {
                 console.log('No estamos en la página principal, no redirigir');
                 return;
@@ -178,7 +313,11 @@ const routes = {
             const isAuth = isAuthenticated();
             console.log('Usuario autenticado:', isAuth);
             
-            // Pequeño delay para mostrar el loading
+            /**
+             * Aplica un delay de 1 segundo para mostrar la pantalla de carga
+             * antes de redirigir al usuario según su estado de autenticación
+             * @param {number} delay - 1000ms para mejorar UX
+             */
             setTimeout(() => {
                 if (isAuth) {
                     redirectToHome();
@@ -187,6 +326,23 @@ const routes = {
                 }
             }, 1000);
         });
+
+        // ===============================================
+        // EXPORTACIONES Y CONFIGURACIÓN GLOBAL
+        // ===============================================
+
+        /**
+         * Configuración global del router
+         * @namespace CheckNoteRouter
+         * @description Objeto global que contiene configuración y métodos del router
+         * @since 2.0.0
+         */
+        window.CheckNoteRouter = {
+            version: '2.0.0',
+            isAuthenticated: isAuthenticated,
+            navigateTo: window.navigateTo,
+            logout: window.logout
+        };
     </script>
 </body>
 </html>
