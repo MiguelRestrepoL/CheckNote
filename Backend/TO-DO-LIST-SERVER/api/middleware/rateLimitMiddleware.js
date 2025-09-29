@@ -37,12 +37,12 @@ const apiLimiter = rateLimit({
 
 // Rate limiting para password reset
 const passwordResetLimiter = rateLimit({
-  windowMs: 30 * 60 * 1000, // 30 minutos
+  windowMs: 10 * 60 * 1000, // 30 minutos
   max: 10,
   message: {
     success: false,
-    message: 'Demasiados intentos de recuperación. Intenta de nuevo en 30 minutos.',
-    retryAfter: '30 minutos'
+    message: 'Demasiados intentos de recuperación. Intenta de nuevo en 10 minutos.',
+    retryAfter: '10 minutos'
   }
 });
 
