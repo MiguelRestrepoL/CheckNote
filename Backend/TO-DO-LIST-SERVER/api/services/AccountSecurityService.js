@@ -31,9 +31,21 @@ const LoginAttempt = mongoose.models.LoginAttempt ||
                     mongoose.model('LoginAttempt', LoginAttemptSchema);
 const BlockedAccount = mongoose.models.BlockedAccount || 
                       mongoose.model('BlockedAccount', BlockedAccountSchema);
-
+/**
+ * Service for managing account security, login attempts, and account blocking
+ * Implements rate limiting with configurable thresholds and automatic blocking
+ * Uses MongoDB TTL indexes for automatic cleanup of expired data
+ * Includes caching mechanism to reduce database load
+ */
 class AccountSecurityService {
-  // CONFIGURACIÓN CENTRALIZADA
+  /**
+   * Security configuration constants
+   * @static
+   * @property {number} MAX_FAILED_ATTEMPTS - Maximum failed login attempts before blocking (5)
+   * @property {number} BLOCK_WINDOW_MINUTES - Time window to count failed attempts (10 minutes)
+   * @property {number} BLOCK_DURATION_MINUTES - Duration of account block (30 minutes)
+   * @property {number} MAX_BLOCK_ATTEMPTS_PER_DAY - Maximum times account can be blocked per day (3)
+   */
   static CONFIG = {
     MAX_FAILED_ATTEMPTS: 5,
     BLOCK_WINDOW_MINUTES: 10,
@@ -41,7 +53,16 @@ class AccountSecurityService {
     MAX_BLOCK_ATTEMPTS_PER_DAY: 3 // Nuevo: límite de bloqueos por día
   };
 
-  // VALIDACIÓN DE ENTRADA
+  /**
+   * Validate and normalize email and IP address inputs
+   * @static
+   * @param {string} email - Email address to validate
+   * @param {string} ip - IP address to validate
+   * @returns {Object} Validated and normalized inputs
+   * @returns {string} returns.email - Lowercase trimmed email
+   * @returns {string} returns.ip - Trimmed IP address
+   * @throws {Error} When email or IP format is invalid
+   */
   static validateInputs(email, ip) {
     if (!email || typeof email !== 'string' || !email.includes('@')) {
       throw new Error('Email inválido');
@@ -57,7 +78,18 @@ class AccountSecurityService {
     };
   }
 
-  // REGISTRAR INTENTO CON VALIDACIÓN MEJORADA
+  /**
+   * Record login attempt and automatically check for blocking
+   * @async
+   * @static
+   * @param {string} email - User's email address
+   * @param {string} ip - Client IP address
+   * @param {boolean} success - Whether login attempt succeeded
+   * @param {string} [userAgent=null] - Client user agent (max 255 chars)
+   * @returns {Promise<Object>} Saved login attempt document
+   * @throws {Error} When validation fails or database operation fails
+   * @description Automatically triggers account blocking check on failed attempts
+   */
   static async recordLoginAttempt(email, ip, success, userAgent = null) {
     try {
       const { email: validEmail, ip: validIp } = this.validateInputs(email, ip);
@@ -89,7 +121,17 @@ class AccountSecurityService {
     }
   }
 
-  // VERIFICACIÓN Y BLOQUEO CON PROTECCIÓN CONTRA RACE CONDITIONS
+ /**
+   * Check failed attempts and block account if threshold exceeded
+   * Uses MongoDB transactions to prevent race conditions
+   * @async
+   * @static
+   * @param {string} email - Email address to check
+   * @param {string} ip - IP address of attempts
+   * @returns {Promise<boolean>} True if account was blocked, false otherwise
+   * @throws {Error} When database operation fails
+   * @description Protected against race conditions using MongoDB sessions
+   */
   static async checkAndBlockAccountSafe(email, ip) {
     const session = await mongoose.startSession();
     
@@ -170,9 +212,27 @@ class AccountSecurityService {
     }
   }
 
-  // VERIFICAR BLOQUEO CON CACHÉ SIMPLE
+   /**
+   * In-memory cache for account block status
+   * @static
+   * @type {Map<string, Object>}
+   * @private
+   * @description Cache entries expire after 30 seconds
+   */
   static accountBlockCache = new Map();
-  
+   /**
+   * Check if account is currently blocked with caching
+   * @async
+   * @static
+   * @param {string} email - Email address to check
+   * @returns {Promise<Object>} Block status information
+   * @returns {boolean} returns.blocked - Whether account is blocked
+   * @returns {Date} [returns.blockedUntil] - When block expires
+   * @returns {number} [returns.minutesLeft] - Minutes remaining on block
+   * @returns {string} [returns.reason] - Reason for block
+   * @returns {number} [returns.attemptCount] - Number of failed attempts
+   * @description Uses 30-second cache to reduce database queries
+   */
   static async isAccountBlocked(email) {
     try {
       const { email: validEmail } = this.validateInputs(email, 'dummy');
@@ -217,7 +277,14 @@ class AccountSecurityService {
     }
   }
 
-  // DESBLOQUEO CON LIMPIEZA DE CACHÉ
+  /**
+   * Manually unblock an account and clear cache
+   * @async
+   * @static
+   * @param {string} email - Email address to unblock
+   * @returns {Promise<boolean>} True if account was unblocked, false if not found
+   * @throws {Error} When database operation fails
+   */
   static async unblockAccount(email) {
     try {
       const { email: validEmail } = this.validateInputs(email, 'dummy');
@@ -238,7 +305,28 @@ class AccountSecurityService {
     }
   }
 
-  // ESTADÍSTICAS MEJORADAS
+  /**
+   * Get security statistics for system or specific user
+   * @async
+   * @static
+   * @param {string} [email=null] - Email for user-specific stats, null for system stats
+   * @returns {Promise<Object>} Statistics object
+   * @returns {Object} [returns.user] - User-specific statistics (if email provided)
+   * @returns {string} returns.user.email - User email
+   * @returns {number} returns.user.recentAttempts - Login attempts in last 24h
+   * @returns {number} returns.user.successfulAttempts - Successful logins
+   * @returns {number} returns.user.failedAttempts - Failed login attempts
+   * @returns {boolean} returns.user.blocked - Current block status
+   * @returns {Date} returns.user.blockedUntil - Block expiration
+   * @returns {Date} returns.user.lastAttempt - Most recent attempt
+   * @returns {number} returns.user.uniqueIPs - Number of unique IPs used
+   * @returns {Object} [returns.system] - System-wide statistics (if no email)
+   * @returns {number} returns.system.totalAttempts - Total login attempts
+   * @returns {number} returns.system.activeBlocks - Currently blocked accounts
+   * @returns {number} returns.system.todayAttempts - Attempts today
+   * @returns {number} returns.system.cacheSize - Number of cached entries
+   * @throws {Error} When database operation fails
+   */
   static async getSecurityStats(email = null) {
     try {
       const stats = {};
@@ -289,7 +377,16 @@ class AccountSecurityService {
     }
   }
 
-  // LIMPIEZA MEJORADA (solo para casos especiales)
+  /**
+   * Clean up expired blocked accounts and clear cache
+   * @async
+   * @static
+   * @returns {Promise<Object>} Cleanup results
+   * @returns {number} returns.deletedAttempts - Always 0 (TTL handles this)
+   * @returns {number} returns.deletedBlocks - Number of expired blocks deleted
+   * @throws {Error} When database operation fails
+   * @description LoginAttempt cleanup handled by MongoDB TTL index
+   */
   static async cleanupExpiredAttempts() {
     try {
       // MongoDB TTL ya maneja LoginAttempt, solo limpiar BlockedAccount expirados
@@ -332,8 +429,21 @@ const PasswordResetTokenSchema = new mongoose.Schema({
 });
 
 const PasswordResetToken = mongoose.model('PasswordResetToken', PasswordResetTokenSchema);
-
+/**
+ * Service for secure password reset token management
+ * Implements cryptographic token generation, validation, and usage tracking
+ * Uses SHA-256 hashing for secure token storage
+ * Includes rate limiting and brute-force protection
+ */
 class PasswordResetService {
+  /**
+   * Password reset configuration constants
+   * @static
+   * @property {number} TOKEN_LENGTH - Token length in bytes (32)
+   * @property {number} TOKEN_EXPIRY_HOURS - Token validity duration (1 hour)
+   * @property {number} MAX_TOKENS_PER_HOUR - Maximum reset requests per hour (5)
+   * @property {number} MAX_USE_ATTEMPTS - Maximum token validation attempts (5)
+   */
   static CONFIG = {
     TOKEN_LENGTH: 32, // bytes
     TOKEN_EXPIRY_HOURS: 1,
@@ -341,7 +451,20 @@ class PasswordResetService {
     MAX_USE_ATTEMPTS: 5,
   };
 
-  // GENERAR TOKEN SEGURO
+  /**
+   * Generate cryptographically secure password reset token
+   * @async
+   * @static
+   * @param {string} email - User's email address
+   * @param {string} ip - Client IP address
+   * @param {string} [userAgent=null] - Client user agent (max 255 chars)
+   * @returns {Promise<Object>} Token information
+   * @returns {string} returns.token - Reset token (only returned, never stored)
+   * @returns {Date} returns.expiresAt - Token expiration timestamp
+   * @returns {string} returns.tokenId - MongoDB document ID
+   * @throws {Error} When email invalid or database operation fails
+   * @description Token is hashed with SHA-256 before storage. Plain token never stored in database.
+   */
   static async generateResetToken(email, ip, userAgent = null) {
     try {
       if (!email || !email.includes('@')) {
@@ -387,7 +510,20 @@ class PasswordResetService {
     }
   }
 
-  // VALIDAR TOKEN CON PROTECCIÓN CONTRA ATAQUES
+   /**
+   * Validate reset token without consuming it
+   * @async
+   * @static
+   * @param {string} token - Reset token to validate
+   * @returns {Promise<Object>} Validation result
+   * @returns {boolean} returns.valid - Whether token is valid
+   * @returns {string} [returns.email] - Email associated with token (if valid)
+   * @returns {string} [returns.tokenId] - Token document ID (if valid)
+   * @returns {Date} [returns.createdAt] - Token creation date (if valid)
+   * @returns {number} [returns.attempts] - Number of validation attempts (if valid)
+   * @returns {string} [returns.error] - Error message (if invalid)
+   * @description Blocks token after MAX_USE_ATTEMPTS failed validation attempts
+   */
   static async validateResetToken(token) {
     try {
       if (!token || typeof token !== 'string') {
@@ -446,7 +582,21 @@ class PasswordResetService {
     }
   }
 
-  // USAR TOKEN CON TRANSACCIÓN
+   /**
+   * Use reset token to authorize password change
+   * Marks token as used and prevents reuse
+   * @async
+   * @static
+   * @param {string} token - Reset token
+   * @param {string} newPassword - New password (not validated by this method)
+   * @returns {Promise<Object>} Usage result
+   * @returns {boolean} returns.success - Whether token was successfully used
+   * @returns {string} [returns.email] - Email associated with token (if success)
+   * @returns {string} [returns.tokenId] - Token document ID (if success)
+   * @returns {string} [returns.error] - Error message (if failed)
+   * @throws {Error} When database operation fails
+   * @description Uses MongoDB transaction to prevent race conditions
+   */
   static async useResetToken(token, newPassword) {
     const session = await mongoose.startSession();
     
@@ -490,7 +640,16 @@ class PasswordResetService {
     }
   }
 
-  // VALIDACIÓN DE CONTRASEÑA MEJORADA
+   /**
+   * Validate new password against security requirements
+   * @static
+   * @param {string} password - Password to validate
+   * @returns {Object} Validation result
+   * @returns {boolean} returns.valid - Whether password meets requirements
+   * @returns {string[]} returns.errors - Array of validation error messages
+   * @returns {string} returns.strength - Password strength rating (muy_débil to muy_fuerte)
+   * @description Requirements: 8-128 chars, lowercase, uppercase, number, special char, no weak patterns
+   */
   static validateNewPassword(password) {
     const errors = [];
 
@@ -531,7 +690,13 @@ class PasswordResetService {
     };
   }
 
-  // CALCULAR FUERZA DE CONTRASEÑA
+   /**
+   * Calculate password strength score
+   * @static
+   * @param {string} password - Password to evaluate
+   * @returns {string} Strength rating: muy_débil, débil, regular, buena, fuerte, muy_fuerte
+   * @description Scores based on length, character variety, and complexity
+   */
   static calculatePasswordStrength(password) {
     let score = 0;
     
@@ -547,7 +712,19 @@ class PasswordResetService {
     return levels[Math.min(score, levels.length - 1)] || 'muy_débil';
   }
 
-  // OTRAS FUNCIONES SIN CAMBIOS SIGNIFICATIVOS...
+  /**
+   * Check if user can request password reset (rate limiting)
+   * @async
+   * @static
+   * @param {string} email - Email address
+   * @returns {Promise<Object>} Rate limit status
+   * @returns {boolean} returns.canRequest - Whether new request is allowed
+   * @returns {number} returns.recentRequests - Number of requests in last hour
+   * @returns {number} returns.maxAllowed - Maximum allowed requests per hour
+   * @returns {Date} [returns.nextAllowedAt] - When next request will be allowed (if blocked)
+   * @returns {string} [returns.error] - Error message if request failed
+   * @throws {Error} When database operation fails
+   */
   static async canRequestReset(email) {
     try {
       if (!email || !email.includes('@')) {
@@ -575,7 +752,15 @@ class PasswordResetService {
       return { canRequest: false, error: 'Error del servidor' };
     }
   }
-
+  /**
+   * Invalidate all unused tokens for a user
+   * @async
+   * @static
+   * @param {string} email - Email address
+   * @returns {Promise<number>} Number of tokens invalidated
+   * @throws {Error} When database operation fails
+   * @description Called after successful password change or account deletion
+   */
   static async invalidateUserTokens(email) {
     try {
       if (!email) return 0;
@@ -592,7 +777,25 @@ class PasswordResetService {
       throw error;
     }
   }
-
+  /**
+   * Get password reset statistics for system or specific user
+   * @async
+   * @static
+   * @param {string} [email=null] - Email for user-specific stats, null for system stats
+   * @returns {Promise<Object>} Statistics object
+   * @returns {Object} [returns.user] - User-specific statistics (if email provided)
+   * @returns {string} returns.user.email - User email
+   * @returns {number} returns.user.totalRequests - Total reset requests
+   * @returns {number} returns.user.successfulResets - Completed password resets
+   * @returns {Date} returns.user.lastRequest - Most recent request
+   * @returns {Date} returns.user.lastReset - Most recent successful reset
+   * @returns {Object} [returns.system] - System-wide statistics (if no email)
+   * @returns {number} returns.system.totalRequests - Total reset requests
+   * @returns {number} returns.system.successfulResets - Total successful resets
+   * @returns {number} returns.system.activeTokens - Currently valid unused tokens
+   * @returns {string} returns.system.successRate - Success rate percentage
+   * @throws {Error} When database operation fails
+   */
   static async getResetStats(email = null) {
     try {
       const stats = {};
@@ -635,7 +838,14 @@ class PasswordResetService {
       throw error;
     }
   }
-
+  /**
+   * Clean up old used tokens
+   * @async
+   * @static
+   * @returns {Promise<number>} Number of tokens deleted
+   * @throws {Error} When database operation fails
+   * @description Removes used tokens older than 24 hours. Unused tokens handled by TTL index.
+   */
   static async cleanupExpiredTokens() {
     try {
       // MongoDB TTL maneja la expiración, pero podemos limpiar tokens usados antiguos
