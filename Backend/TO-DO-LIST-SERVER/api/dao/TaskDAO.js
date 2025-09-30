@@ -1,12 +1,26 @@
 const Task = require('../models/Task');
 const mongoose = require('mongoose');
-
+/**
+ * Data Access Object for Task operations
+ * Handles all database interactions for Task model
+ * Includes Kanban board functionality with three states: pendiente, en_progreso, terminada
+ * All methods are static and throw errors to be handled by controllers
+ */
 class TaskDAO {
-  
   /**
-   * Crear nueva tarea
-   * @param {Object} taskData - Datos de la tarea
-   * @returns {Object} Tarea creada con ID
+   * Create a new task in the database
+   * @async
+   * @static
+   * @param {Object} taskData - Task data to create
+   * @param {string} taskData.titulo - Task title
+   * @param {string} [taskData.descripcion] - Task description
+   * @param {string} [taskData.prioridad='media'] - Priority (baja|media|alta)
+   * @param {string} [taskData.estado='pendiente'] - Kanban state (pendiente|en_progreso|terminada)
+   * @param {Date} [taskData.fechaVencimiento] - Due date
+   * @param {string} taskData.userId - Owner user ID
+   * @returns {Promise<Object>} Created task document
+   * @throws {MongoError} When database operation fails
+   * @throws {ValidationError} When Mongoose validation fails
    */
   static async createTask(taskData) {
     try {
@@ -18,11 +32,17 @@ class TaskDAO {
     }
   }
 
-  /**
-   * Obtener todas las tareas de un usuario con filtros mejorados
-   * @param {String} userId - ID del usuario
-   * @param {Object} filters - Filtros opcionales
-   * @returns {Array} Lista de tareas
+ /**
+   * Get all tasks for a user with optional filters
+   * @async
+   * @static
+   * @param {string} userId - User's MongoDB ObjectId
+   * @param {Object} [filters={}] - Optional filters
+   * @param {string} [filters.estado] - Filter by Kanban state (pendiente|en_progreso|terminada)
+   * @param {boolean} [filters.completada] - Filter by completion (maps to estado)
+   * @param {string} [filters.prioridad] - Filter by priority (baja|media|alta)
+   * @returns {Promise<Array<Object>>} Array of task documents sorted by creation date
+   * @throws {MongoError} When database operation fails
    */
   static async getTasksByUserId(userId, filters = {}) {
     try {
@@ -58,10 +78,16 @@ class TaskDAO {
     }
   }
 
-  /**
-   * NUEVO: Obtener tareas organizadas por tablero Kanban
-   * @param {String} userId - ID del usuario
-   * @returns {Object} Tareas organizadas por estado
+    /**
+   * Get tasks organized by Kanban board columns
+   * @async
+   * @static
+   * @param {string} userId - User's MongoDB ObjectId
+   * @returns {Promise<Object>} Tasks grouped by state
+   * @returns {Array<Object>} returns.pendiente - Tasks in pending state
+   * @returns {Array<Object>} returns.en_progreso - Tasks in progress
+   * @returns {Array<Object>} returns.terminada - Completed tasks
+   * @throws {MongoError} When database operation fails
    */
   static async getTasksByBoard(userId) {
     try {
@@ -79,10 +105,17 @@ class TaskDAO {
     }
   }
 
-  /**
-   * NUEVO: Obtener estadísticas del tablero Kanban
-   * @param {String} userId - ID del usuario
-   * @returns {Object} Estadísticas por estado
+ /**
+   * Get statistics for Kanban board columns
+   * @async
+   * @static
+   * @param {string} userId - User's MongoDB ObjectId
+   * @returns {Promise<Object>} Statistics by state
+   * @returns {number} returns.pendiente - Count of pending tasks
+   * @returns {number} returns.en_progreso - Count of in-progress tasks
+   * @returns {number} returns.terminada - Count of completed tasks
+   * @returns {number} returns.total - Total task count
+   * @throws {MongoError} When database operation fails
    */
   static async getBoardStats(userId) {
     try {
@@ -116,12 +149,17 @@ class TaskDAO {
     }
   }
 
-  /**
-   * NUEVO: Cambiar estado de una tarea
-   * @param {String} taskId - ID de la tarea
-   * @param {String} userId - ID del usuario
-   * @param {String} nuevoEstado - Nuevo estado ('pendiente', 'en_progreso', 'terminada')
-   * @returns {Object|null} Tarea actualizada o null
+    /**
+   * Update task Kanban state with ownership validation
+   * Automatically synchronizes completada field when moving to/from terminada
+   * @async
+   * @static
+   * @param {string} taskId - Task's MongoDB ObjectId
+   * @param {string} userId - User's MongoDB ObjectId for ownership validation
+   * @param {string} nuevoEstado - New state (pendiente|en_progreso|terminada)
+   * @returns {Promise<Object|null>} Updated task or null if not found/unauthorized
+   * @throws {Error} When estado is invalid
+   * @throws {MongoError} When database operation fails
    */
   static async updateTaskStatus(taskId, userId, nuevoEstado) {
     try {
@@ -156,10 +194,13 @@ class TaskDAO {
     }
   }
 
-  /**
-   * Obtener tarea por ID
-   * @param {String} taskId - ID de la tarea
-   * @returns {Object|null} Tarea encontrada o null
+ /**
+   * Get task by ID without ownership validation
+   * @async
+   * @static
+   * @param {string} taskId - Task's MongoDB ObjectId
+   * @returns {Promise<Object|null>} Task document or null if not found
+   * @throws {MongoError} When database operation fails
    */
   static async getTaskById(taskId) {
     try {
@@ -174,11 +215,14 @@ class TaskDAO {
     }
   }
 
-  /**
-   * Obtener tarea por ID y verificar que pertenece al usuario
-   * @param {String} taskId - ID de la tarea
-   * @param {String} userId - ID del usuario
-   * @returns {Object|null} Tarea si pertenece al usuario, null si no
+/**
+   * Get task by ID with ownership validation
+   * @async
+   * @static
+   * @param {string} taskId - Task's MongoDB ObjectId
+   * @param {string} userId - User's MongoDB ObjectId for ownership validation
+   * @returns {Promise<Object|null>} Task document or null if not found/unauthorized
+   * @throws {MongoError} When database operation fails
    */
   static async getTaskByIdAndUser(taskId, userId) {
     try {
@@ -198,11 +242,23 @@ class TaskDAO {
   }
 
   /**
-   * Actualizar tarea (modificado para manejar estados)
-   * @param {String} taskId - ID de la tarea
-   * @param {String} userId - ID del usuario (validar propiedad)
-   * @param {Object} updateData - Datos a actualizar
-   * @returns {Object|null} Tarea actualizada o null
+   * Update task fields with ownership validation
+   * Automatically synchronizes estado and completada fields
+   * @async
+   * @static
+   * @param {string} taskId - Task's MongoDB ObjectId
+   * @param {string} userId - User's MongoDB ObjectId for ownership validation
+   * @param {Object} updateData - Fields to update
+   * @param {string} [updateData.titulo] - New title
+   * @param {string} [updateData.descripcion] - New description
+   * @param {string} [updateData.estado] - New Kanban state
+   * @param {boolean} [updateData.completada] - New completion status
+   * @param {string} [updateData.prioridad] - New priority
+   * @param {Date} [updateData.fechaVencimiento] - New due date
+   * @returns {Promise<Object|null>} Updated task or null if not found/unauthorized
+   * @throws {Error} When estado is invalid
+   * @throws {MongoError} When database operation fails
+   * @throws {ValidationError} When validation fails
    */
   static async updateTask(taskId, userId, updateData) {
     try {
@@ -247,10 +303,13 @@ class TaskDAO {
   }
 
   /**
-   * Eliminar tarea
-   * @param {String} taskId - ID de la tarea
-   * @param {String} userId - ID del usuario (validar propiedad)
-   * @returns {Object|null} Tarea eliminada o null
+   * Delete task with ownership validation
+   * @async
+   * @static
+   * @param {string} taskId - Task's MongoDB ObjectId to delete
+   * @param {string} userId - User's MongoDB ObjectId for ownership validation
+   * @returns {Promise<Object|null>} Deleted task or null if not found/unauthorized
+   * @throws {MongoError} When database operation fails
    */
   static async deleteTask(taskId, userId) {
     try {
@@ -269,12 +328,16 @@ class TaskDAO {
     }
   }
 
-  /**
-   * Marcar tarea como completada/pendiente (actualizado para Kanban)
-   * @param {String} taskId - ID de la tarea
-   * @param {String} userId - ID del usuario
-   * @param {Boolean} completada - Estado de completado
-   * @returns {Object|null} Tarea actualizada o null
+ /**
+   * Toggle task completion status
+   * Maps completion to Kanban states (completada=true → terminada, false → pendiente)
+   * @async
+   * @static
+   * @param {string} taskId - Task's MongoDB ObjectId
+   * @param {string} userId - User's MongoDB ObjectId for ownership validation
+   * @param {boolean} completada - New completion status
+   * @returns {Promise<Object|null>} Updated task or null if not found/unauthorized
+   * @throws {MongoError} When database operation fails
    */
   static async toggleTaskStatus(taskId, userId, completada) {
     try {
@@ -288,10 +351,21 @@ class TaskDAO {
     }
   }
 
-  /**
-   * Obtener estadísticas de tareas del usuario (actualizado para Kanban)
-   * @param {String} userId - ID del usuario
-   * @returns {Object} Estadísticas completas
+ /**
+   * Get comprehensive task statistics for user
+   * Includes both Kanban states and legacy completion fields
+   * @async
+   * @static
+   * @param {string} userId - User's MongoDB ObjectId
+   * @returns {Promise<Object>} Complete statistics object
+   * @returns {number} returns.total - Total task count
+   * @returns {number} returns.pendiente - Pending tasks count
+   * @returns {number} returns.en_progreso - In-progress tasks count
+   * @returns {number} returns.terminada - Completed tasks count
+   * @returns {number} returns.completadas - Legacy completed count
+   * @returns {number} returns.pendientes - Legacy pending count
+   * @returns {number} returns.prioridadAlta - High priority tasks count
+   * @throws {MongoError} When database operation fails
    */
   static async getTaskStats(userId) {
     try {
@@ -342,10 +416,15 @@ class TaskDAO {
   }
 
   /**
-   * NUEVO: Obtener tareas próximas a vencer por estado
-   * @param {String} userId - ID del usuario
-   * @param {Number} days - Días de anticipación
-   * @returns {Object} Tareas próximas a vencer por estado
+   * Get tasks due within specified days, excluding completed
+   * @async
+   * @static
+   * @param {string} userId - User's MongoDB ObjectId
+   * @param {number} [days=7] - Days ahead to look for due dates
+   * @returns {Promise<Object>} Upcoming tasks grouped by state
+   * @returns {Array<Object>} returns.pendiente - Pending tasks due soon
+   * @returns {Array<Object>} returns.en_progreso - In-progress tasks due soon
+   * @throws {MongoError} When database operation fails
    */
   static async getUpcomingTasksByState(userId, days = 7) {
     try {
@@ -371,11 +450,15 @@ class TaskDAO {
   }
 
   /**
-   * NUEVO: Mover múltiples tareas a un estado
-   * @param {Array} taskIds - IDs de las tareas
-   * @param {String} userId - ID del usuario
-   * @param {String} nuevoEstado - Nuevo estado
-   * @returns {Number} Número de tareas actualizadas
+   * Update multiple tasks to same state (bulk operation)
+   * @async
+   * @static
+   * @param {Array<string>} taskIds - Array of task MongoDB ObjectIds
+   * @param {string} userId - User's MongoDB ObjectId for ownership validation
+   * @param {string} nuevoEstado - New state for all tasks (pendiente|en_progreso|terminada)
+   * @returns {Promise<number>} Number of tasks successfully updated
+   * @throws {Error} When estado is invalid
+   * @throws {MongoError} When database operation fails
    */
   static async bulkUpdateStatus(taskIds, userId, nuevoEstado) {
     try {
@@ -403,9 +486,13 @@ class TaskDAO {
   }
 
   /**
-   * Eliminar todas las tareas de un usuario
-   * @param {String} userId - ID del usuario
-   * @returns {Number} Número de tareas eliminadas
+   * Delete all tasks for a user
+   * @async
+   * @static
+   * @param {string} userId - User's MongoDB ObjectId
+   * @returns {Promise<number>} Number of tasks deleted
+   * @throws {MongoError} When database operation fails
+   * @description Used when deleting user account
    */
   static async deleteAllUserTasks(userId) {
     try {
