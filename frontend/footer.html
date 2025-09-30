@@ -1,0 +1,241 @@
+<!-- ============================================
+     FOOTER CHECKNOTE - Mapa del Sitio
+     ============================================ -->
+
+<footer class="site-footer">
+  <div class="footer-container">
+    <!-- Logo y descripción -->
+    <div class="footer-section footer-brand">
+      <div class="footer-logo">
+        <img src="/logos.png" alt="CheckNote Logo" width="40">
+        <h3>CheckNote</h3>
+      </div>
+      <p class="footer-description">
+        Gestiona tus tareas de manera eficiente y mantente organizado.
+      </p>
+    </div>
+
+    <!-- Navegación principal -->
+    <div class="footer-section">
+      <h4 class="footer-title">Navegación</h4>
+      <ul class="footer-links">
+        <li><a href="/home.html">Inicio</a></li>
+        <li><a href="/crear-tarea.html">Crear Tarea</a></li>
+        <li><a href="/perfil.html">Mi Perfil</a></li>
+        <li><a href="/sobre-nosotros.html">Sobre Nosotros</a></li>
+      </ul>
+    </div>
+
+    <!-- Cuenta -->
+    <div class="footer-section">
+      <h4 class="footer-title">Cuenta</h4>
+      <ul class="footer-links">
+        <li><a href="/login.html">Iniciar Sesión</a></li>
+        <li><a href="/registro.html">Registrarse</a></li>
+        <li><a href="/olvidar-password1.html">Recuperar Contraseña</a></li>
+        <li><a href="/eliminar-cuenta.html">Eliminar Cuenta</a></li>
+      </ul>
+    </div>
+
+    <!-- Soporte -->
+    <div class="footer-section">
+      <h4 class="footer-title">Soporte</h4>
+      <ul class="footer-links">
+        <li>
+          <a href="mailto:checknoteSupport@checknote.co">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+              <polyline points="22,6 12,13 2,6"></polyline>
+            </svg>
+            checknoteSupport@checknote.co
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Copyright -->
+  <div class="footer-bottom">
+    <p>&copy; 2025 CheckNote. Todos los derechos reservados.</p>
+  </div>
+</footer>
+
+<style>
+/* ============================================
+   ESTILOS DEL FOOTER
+   ============================================ */
+
+.site-footer {
+  background: linear-gradient(to bottom, #0f172a, #0b1220);
+  color: var(--text-secondary);
+  padding: 3rem 2rem 1.5rem;
+  margin-top: auto;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1.5fr;
+  gap: 3rem;
+  margin-bottom: 2rem;
+}
+
+.footer-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Brand section */
+.footer-brand {
+  gap: 1.5rem;
+}
+
+.footer-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.footer-logo h3 {
+  color: var(--primary);
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.footer-description {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  max-width: 280px;
+}
+
+/* Títulos de sección */
+.footer-title {
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+/* Links */
+.footer-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.footer-links li {
+  line-height: 1.5;
+}
+
+.footer-links a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.footer-links a:hover {
+  color: var(--primary);
+}
+
+.footer-links a svg {
+  flex-shrink: 0;
+}
+
+/* Bottom section */
+.footer-bottom {
+  text-align: center;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.footer-bottom p {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+/* ============================================
+   RESPONSIVE - TABLET
+   ============================================ */
+@media (max-width: 1024px) {
+  .footer-container {
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+  }
+}
+
+/* ============================================
+   RESPONSIVE - MÓVIL
+   ============================================ */
+@media (max-width: 768px) {
+  .site-footer {
+    padding: 2rem 1.5rem 1rem;
+  }
+
+  .footer-container {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    text-align: center;
+  }
+
+  .footer-section {
+    align-items: center;
+  }
+
+  .footer-logo {
+    justify-content: center;
+  }
+
+  .footer-description {
+    max-width: 100%;
+  }
+
+  .footer-links {
+    align-items: center;
+  }
+
+  .footer-bottom {
+    padding-top: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .site-footer {
+    padding: 1.5rem 1rem 1rem;
+  }
+
+  .footer-container {
+    gap: 1.5rem;
+  }
+
+  .footer-logo h3 {
+    font-size: 1.25rem;
+  }
+
+  .footer-title {
+    font-size: 0.95rem;
+  }
+
+  .footer-links a {
+    font-size: 0.85rem;
+  }
+
+  .footer-description,
+  .footer-bottom p {
+    font-size: 0.8rem;
+  }
+}
+</style>
