@@ -1,11 +1,30 @@
 const User = require('../models/User');
-
+/**
+ * Data Access Object for User operations
+ * Handles all database interactions for User model
+ * All methods are static and throw errors to be handled by controllers
+ */
 class UserDAO {
   
   /**
-   * Crear un nuevo usuario
-   * @param {Object} userData - Datos del usuario
-   * @returns {Object} Usuario creado con su ID
+   * Create a new user in the database
+   * @async
+   * @static
+   * @param {Object} userData - User data to create
+   * @param {string} userData.nombres - First name
+   * @param {string} userData.apellidos - Last name
+   * @param {number} userData.edad - Age (minimum 13)
+   * @param {string} userData.correo - Email address (will be lowercased)
+   * @param {string} userData.contrasena - Plain password (will be hashed by model middleware)
+   * @returns {Promise<Object>} Created user object without password
+   * @returns {string} returns.id - User's MongoDB ObjectId
+   * @returns {string} returns.nombres - User's first name
+   * @returns {string} returns.apellidos - User's last name
+   * @returns {number} returns.edad - User's age
+   * @returns {string} returns.correo - User's email
+   * @returns {Date} returns.createdAt - Creation timestamp
+   * @throws {MongoError} When database operation fails
+   * @throws {ValidationError} When Mongoose validation fails
    */
   static async createUser(userData) {
     try {
@@ -28,9 +47,12 @@ class UserDAO {
   }
 
   /**
-   * Buscar usuario por correo electrónico
-   * @param {String} correo - Correo del usuario
-   * @returns {Object|null} Usuario encontrado o null
+   * Find user by email address
+   * @async
+   * @static
+   * @param {string} correo - Email to search for (case-insensitive)
+   * @returns {Promise<Object|null>} User document with password or null if not found
+   * @throws {MongoError} When database operation fails
    */
   static async findByEmail(correo) {
     try {
@@ -41,10 +63,14 @@ class UserDAO {
     }
   }
 
-  /**
-   * Buscar usuario por ID
-   * @param {String} userId - ID del usuario
-   * @returns {Object|null} Usuario encontrado o null
+   /**
+   * Find user by MongoDB ObjectId
+   * @async
+   * @static
+   * @param {string} userId - User's MongoDB ObjectId
+   * @returns {Promise<Object|null>} User document or null if not found
+   * @throws {MongoError} When database operation fails
+   * @throws {CastError} When userId format is invalid
    */
   static async findById(userId) {
     try {
@@ -55,10 +81,13 @@ class UserDAO {
     }
   }
 
-  /**
-   * Verificar si un correo ya existe
-   * @param {String} correo - Correo a verificar
-   * @returns {Boolean} true si existe, false si no
+   /**
+   * Check if email exists in database
+   * @async
+   * @static
+   * @param {string} correo - Email to check (case-insensitive)
+   * @returns {Promise<boolean>} True if email exists, false otherwise
+   * @throws {MongoError} When database operation fails
    */
   static async emailExists(correo) {
     try {
@@ -69,9 +98,12 @@ class UserDAO {
     }
   }
 
-  /**
-   * Obtener todos los usuarios (para administración)
-   * @returns {Array} Lista de usuarios
+   /**
+   * Get all users from database (admin functionality)
+   * @async
+   * @returns {Promise<Array<Object>>} Array of user objects without passwords
+   * @throws {MongoError} When database operation fails
+   * @description Should be restricted to admin users in production
    */
   async getAllUsers() {
     try {
@@ -82,10 +114,18 @@ class UserDAO {
     }
   }
   /**
-   * Actualizar datos de usuario por ID
-   * @param {string} userId - ObjectId del usuario
-   * @param {Object} updateData - Datos a actualizar
-   * @returns {Promise<Object|null>} Usuario actualizado sin contraseña
+   * Update user data by ID
+   * @async
+   * @static
+   * @param {string} userId - User's MongoDB ObjectId
+   * @param {Object} updateData - Fields to update
+   * @param {string} [updateData.nombres] - New first name
+   * @param {string} [updateData.apellidos] - New last name
+   * @param {number} [updateData.edad] - New age
+   * @param {string} [updateData.correo] - New email
+   * @returns {Promise<Object|null>} Updated user without password or null if not found
+   * @throws {MongoError} When database operation fails
+   * @throws {ValidationError} When validation fails
    */
   static async updateUser(userId, updateData) {
     try {
@@ -115,11 +155,15 @@ class UserDAO {
     }
   }
 
-  /**
-   * Actualizar contraseña de usuario
-   * @param {string} userId - ObjectId del usuario
-   * @param {string} newPassword - Nueva contraseña (será hasheada automáticamente)
-   * @returns {Promise<Object|null>} Usuario actualizado sin contraseña
+ /**
+   * Update user password
+   * Password will be automatically hashed by model pre-save middleware
+   * @async
+   * @static
+   * @param {string} userId - User's MongoDB ObjectId
+   * @param {string} newPassword - New plain password (will be hashed automatically)
+   * @returns {Promise<Object|null>} Updated user without password or null if not found
+   * @throws {MongoError} When database operation fails
    */
   static async updatePassword(userId, newPassword) {
     try {
@@ -142,10 +186,13 @@ class UserDAO {
     }
   }
 
-  /**
-   * Eliminar usuario por ID
-   * @param {string} userId - ObjectId del usuario
-   * @returns {Promise<Object|null>} Usuario eliminado sin contraseña
+   /**
+   * Delete user by ID
+   * @async
+   * @static
+   * @param {string} userId - User's MongoDB ObjectId to delete
+   * @returns {Promise<Object|null>} Deleted user without password or null if not found
+   * @throws {MongoError} When database operation fails
    */
   static async deleteUser(userId) {
     try {
@@ -164,11 +211,14 @@ class UserDAO {
   }
 
   /**
-   * Verificar si el email ya existe (excluyendo un usuario específico)
-   * Útil para actualizar perfil sin conflicto con el propio email
-   * @param {string} correo - Email a verificar
-   * @param {string} excludeUserId - ID del usuario a excluir de la búsqueda
-   * @returns {Promise<boolean>} true si existe otro usuario con ese email
+   * Check if email exists excluding specific user
+   * Useful for profile updates to avoid self-conflict
+   * @async
+   * @static
+   * @param {string} correo - Email to check (case-insensitive)
+   * @param {string} excludeUserId - User ID to exclude from search
+   * @returns {Promise<boolean>} True if email exists for another user, false otherwise
+   * @throws {MongoError} When database operation fails
    */
   static async emailExistsExcluding(correo, excludeUserId) {
     try {
@@ -185,9 +235,15 @@ class UserDAO {
   }
 
   /**
-   * Obtener estadísticas básicas del usuario
-   * @param {string} userId - ObjectId del usuario
-   * @returns {Promise<Object|null>} Objeto con estadísticas del usuario
+   * Get user statistics and basic information
+   * @async
+   * @static
+   * @param {string} userId - User's MongoDB ObjectId
+   * @returns {Promise<Object|null>} User statistics object or null if not found
+   * @returns {Object} returns.usuario - User data without password
+   * @returns {Date} returns.fechaRegistro - Registration date (createdAt)
+   * @returns {Date} returns.ultimaActualizacion - Last update date (updatedAt)
+   * @throws {MongoError} When database operation fails
    */
   static async getUserStats(userId) {
     try {
