@@ -1,12 +1,28 @@
 const UserDAO = require('../dao/UserDAO');
 const GlobalController = require('./GlobalController');
 
+/**
+ * Controller for user-related operations
+ * Handles user registration, profile management, and account deletion
+ * @extends GlobalController
+ */
 class UserController extends GlobalController {
   
-  /**
-   * Crear un nuevo usuario
-   * @param {Request} req - Request de Express
-   * @param {Response} res - Response de Express
+ /**
+   * Create a new user account
+   * @async
+   * @param {Object} req - Express request object
+   * @param {Object} req.body - Request body
+   * @param {string} req.body.nombres - User's first name (2-50 chars)
+   * @param {string} req.body.apellidos - User's last name (2-50 chars)
+   * @param {number} req.body.edad - User's age (minimum 13)
+   * @param {string} req.body.correo - User's email address
+   * @param {string} req.body.contrasena - User's password (min 8 chars, must contain uppercase, number, special char)
+   * @param {string} req.body.confirmarContrasena - Password confirmation
+   * @param {Object} res - Express response object
+   * @returns {Promise<void>} Returns 201 with created user data or error response
+   * @throws {ValidationError} When required fields are missing or invalid
+   * @throws {ConflictError} When email already exists (409)
    */
   async create(req, res) {
     try {
@@ -113,8 +129,14 @@ class UserController extends GlobalController {
   }
 
   /**
-   * GET /api/v1/users/me
-   * Obtener perfil del usuario autenticado
+   * Get authenticated user's profile with statistics
+   * @async
+   * @param {Object} req - Express request object
+   * @param {Object} req.user - Authenticated user from JWT middleware
+   * @param {string} req.user._id - User's MongoDB ObjectId
+   * @param {Object} res - Express response object
+   * @returns {Promise<void>} Returns 200 with user profile and registration statistics
+   * @throws {NotFoundError} When user not found (404)
    */
   async getProfile(req, res) {
     try {
@@ -147,8 +169,25 @@ class UserController extends GlobalController {
   }
 
   /**
-   * PUT /api/v1/users/me
-   * Actualizar perfil del usuario autenticado
+   * Update authenticated user's profile
+   * Supports updating basic info (nombres, apellidos, edad, correo) and password change
+   * @async
+   * @param {Object} req - Express request object
+   * @param {Object} req.user - Authenticated user from middleware
+   * @param {string} req.user._id - User's ID
+   * @param {Object} req.body - Request body
+   * @param {string} [req.body.nombres] - New first name
+   * @param {string} [req.body.apellidos] - New last name
+   * @param {number} [req.body.edad] - New age
+   * @param {string} [req.body.correo] - New email address
+   * @param {string} [req.body.contrasenaActual] - Current password (required for password change)
+   * @param {string} [req.body.nuevaContrasena] - New password
+   * @param {string} [req.body.confirmarNuevaContrasena] - New password confirmation
+   * @param {Object} res - Express response object
+   * @returns {Promise<void>} Returns 200 with updated user data
+   * @throws {ValidationError} When validation fails (400)
+   * @throws {ConflictError} When email already exists for another user (409)
+   * @throws {AuthenticationError} When current password is incorrect (401)
    */
   async updateProfile(req, res) {
     try {
@@ -315,9 +354,21 @@ class UserController extends GlobalController {
     }
   }
 
-  /**
-   * DELETE /api/v1/users/me
-   * Eliminar cuenta del usuario autenticado
+ /**
+   * Delete authenticated user's account
+   * Requires password verification and explicit confirmation text "ELIMINAR"
+   * @async
+   * @param {Object} req - Express request object
+   * @param {Object} req.user - Authenticated user from middleware
+   * @param {string} req.user._id - User's ID
+   * @param {Object} req.body - Request body
+   * @param {string} req.body.contrasena - User's password for verification
+   * @param {string} req.body.confirmacion - Must be exactly "ELIMINAR"
+   * @param {Object} res - Express response object
+   * @returns {Promise<void>} Returns 200 with deletion confirmation
+   * @throws {ValidationError} When required fields missing or confirmation text incorrect (400)
+   * @throws {AuthenticationError} When password is incorrect (401)
+   * @throws {NotFoundError} When user not found (404)
    */
   async deleteProfile(req, res) {
     try {
@@ -385,10 +436,18 @@ class UserController extends GlobalController {
     }
   }
 
-  /**
-   * Validar formato de contraseña
-   * @param {String} password - Contraseña a validar
-   * @returns {Object} Resultado de la validación
+ /**
+   * Validate password strength requirements
+   * @param {string} password - Password to validate
+   * @returns {Object} Validation result
+   * @returns {boolean} returns.isValid - Whether password meets all requirements
+   * @returns {string[]} returns.errors - Array of validation error messages
+   * @example
+   * const result = this.validatePassword('Test123!');
+   * // Returns: { isValid: true, errors: [] }
+   * @example
+   * const result = this.validatePassword('weak');
+   * // Returns: { isValid: false, errors: ['La contraseña debe tener al menos 8 caracteres', ...] }
    */
   validatePassword(password) {
     const errors = [];
