@@ -1,9 +1,21 @@
 const TaskDAO = require('../dao/TaskDAO');
-
+/**
+ * Controller for task management operations
+ * Handles CRUD operations, Kanban board, and task status management
+ */
 class TaskController {
 
-  /**
-   * Validar usuario autenticado - método helper
+ /**
+   * Validate authenticated user and extract user ID
+   * @private
+   * @param {Object} req - Express request object
+   * @param {Object} req.user - User object from JWT middleware
+   * @param {string} req.user._id - User's MongoDB ObjectId
+   * @param {Object} res - Express response object
+   * @returns {Object} Validation result
+   * @returns {boolean} returns.error - Whether validation failed
+   * @returns {string} [returns.userId] - User's ID if validation passed
+   * @returns {Object} [returns.response] - Error response if validation failed
    */
   _validateUser(req, res) {
     if (!req.user) {
@@ -29,10 +41,22 @@ class TaskController {
     return { error: false, userId: req.user._id };
   }
 
-  /**
-   * Crear nueva tarea (modificado para incluir estado)
-   * @param {Request} req - Request de Express (con req.user del middleware)
-   * @param {Response} res - Response de Express
+ /**
+   * Create a new task for authenticated user
+   * @async
+   * @param {Object} req - Express request object
+   * @param {Object} req.body - Request body
+   * @param {string} req.body.titulo - Task title (required, 2-100 chars)
+   * @param {string} [req.body.descripcion] - Task description (max 500 chars)
+   * @param {string} [req.body.prioridad='media'] - Priority level (baja|media|alta)
+   * @param {string} [req.body.estado='pendiente'] - Kanban state (pendiente|en_progreso|terminada)
+   * @param {Date} [req.body.fechaVencimiento] - Due date (must be future)
+   * @param {Object} req.user - Authenticated user from middleware
+   * @param {string} req.user._id - User's ID
+   * @param {Object} res - Express response object
+   * @returns {Promise<void>} Returns 201 with created task
+   * @throws {ValidationError} When validation fails (400)
+   * @throws {AuthenticationError} When user not authenticated (401)
    */
   async create(req, res) {
     try {
@@ -126,10 +150,20 @@ class TaskController {
     }
   }
 
-  /**
-   * Obtener todas las tareas del usuario (CORREGIDO: req.user._id en lugar de req.user.id)
-   * @param {Request} req - Request con query params opcionales
-   * @param {Response} res - Response de Express
+/**
+   * Get all tasks for authenticated user with optional filters
+   * @async
+   * @param {Object} req - Express request object
+   * @param {Object} req.query - Query parameters
+   * @param {boolean} [req.query.completada] - Filter by completion status
+   * @param {string} [req.query.prioridad] - Filter by priority (baja|media|alta)
+   * @param {string} [req.query.estado] - Filter by Kanban state (pendiente|en_progreso|terminada)
+   * @param {number} [req.query.limite] - Limit number of results
+   * @param {Object} req.user - Authenticated user
+   * @param {string} req.user._id - User's ID
+   * @param {Object} res - Express response object
+   * @returns {Promise<void>} Returns 200 with tasks array and statistics
+   * @throws {AuthenticationError} When user not authenticated (401)
    */
   async getAll(req, res) {
     try {
@@ -199,10 +233,17 @@ class TaskController {
     }
   }
 
-  /**
-   * NUEVO: Obtener tablero Kanban completo (CORREGIDO)
-   * @param {Request} req - Request de Express
-   * @param {Response} res - Response de Express
+ /**
+   * Get complete Kanban board with tasks organized by state
+   * @async
+   * @param {Object} req - Express request object
+   * @param {Object} req.user - Authenticated user from middleware
+   * @param {string} req.user._id - User's ID
+   * @param {Object} res - Express response object
+   * @returns {Promise<void>} Returns 200 with board data organized by columns
+   * @returns {Object} returns.board - Tasks grouped by state (pendiente, en_progreso, terminada)
+   * @returns {Object} returns.stats - Statistics for each column
+   * @throws {AuthenticationError} When user not authenticated (401)
    */
   async getKanbanBoard(req, res) {
     try {
@@ -245,9 +286,19 @@ class TaskController {
   }
 
   /**
-   * NUEVO: Cambiar estado de tarea (CORREGIDO)
-   * @param {Request} req - Request con params.id y body.estado
-   * @param {Response} res - Response de Express
+   * Update task status/column in Kanban board
+   * @async
+   * @param {Object} req - Express request object
+   * @param {Object} req.params - URL parameters
+   * @param {string} req.params.id - Task ID
+   * @param {Object} req.body - Request body
+   * @param {string} req.body.estado - New state (pendiente|en_progreso|terminada)
+   * @param {Object} req.user - Authenticated user
+   * @param {string} req.user._id - User's ID
+   * @param {Object} res - Express response object
+   * @returns {Promise<void>} Returns 200 with updated task
+   * @throws {ValidationError} When estado is invalid (400)
+   * @throws {NotFoundError} When task not found (404)
    */
   async updateTaskStatus(req, res) {
     try {
@@ -293,10 +344,18 @@ class TaskController {
     }
   }
 
-  /**
-   * NUEVO: Actualizar múltiples tareas a un estado (CORREGIDO)
-   * @param {Request} req - Request con body.taskIds y body.estado
-   * @param {Response} res - Response de Express
+/**
+   * Update multiple tasks to same status (bulk operation)
+   * @async
+   * @param {Object} req - Express request object
+   * @param {Object} req.body - Request body
+   * @param {string[]} req.body.taskIds - Array of task IDs to update
+   * @param {string} req.body.estado - New state for all tasks (pendiente|en_progreso|terminada)
+   * @param {Object} req.user - Authenticated user
+   * @param {string} req.user._id - User's ID
+   * @param {Object} res - Express response object
+   * @returns {Promise<void>} Returns 200 with count of updated tasks
+   * @throws {ValidationError} When taskIds invalid or estado invalid (400)
    */
   async bulkUpdateStatus(req, res) {
     try {
@@ -339,9 +398,18 @@ class TaskController {
       });
     }
   }
-
-  /**
-   * Obtener tarea por ID (CORREGIDO)
+  
+/**
+   * Get specific task by ID with ownership validation
+   * @async
+   * @param {Object} req - Express request object
+   * @param {Object} req.params - URL parameters
+   * @param {string} req.params.id - Task ID
+   * @param {Object} req.user - Authenticated user
+   * @param {string} req.user._id - User's ID
+   * @param {Object} res - Express response object
+   * @returns {Promise<void>} Returns 200 with task data
+   * @throws {NotFoundError} When task not found or doesn't belong to user (404)
    */
   async getById(req, res) {
     try {
@@ -378,8 +446,25 @@ class TaskController {
     }
   }
 
-  /**
-   * Actualizar tarea (CORREGIDO)
+   /**
+   * Update task fields with validation
+   * @async
+   * @param {Object} req - Express request object
+   * @param {Object} req.params - URL parameters
+   * @param {string} req.params.id - Task ID
+   * @param {Object} req.body - Request body
+   * @param {string} [req.body.titulo] - New title
+   * @param {string} [req.body.descripcion] - New description
+   * @param {boolean} [req.body.completada] - Completion status
+   * @param {string} [req.body.estado] - Kanban state (pendiente|en_progreso|terminada)
+   * @param {string} [req.body.prioridad] - Priority (baja|media|alta)
+   * @param {Date} [req.body.fechaVencimiento] - Due date
+   * @param {Object} req.user - Authenticated user
+   * @param {string} req.user._id - User's ID
+   * @param {Object} res - Express response object
+   * @returns {Promise<void>} Returns 200 with updated task
+   * @throws {ValidationError} When validation fails (400)
+   * @throws {NotFoundError} When task not found (404)
    */
   async update(req, res) {
     try {
@@ -487,7 +572,16 @@ class TaskController {
   }
 
   /**
-   * Eliminar tarea (CORREGIDO)
+   * Delete task by ID with ownership validation
+   * @async
+   * @param {Object} req - Express request object
+   * @param {Object} req.params - URL parameters
+   * @param {string} req.params.id - Task ID to delete
+   * @param {Object} req.user - Authenticated user
+   * @param {string} req.user._id - User's ID
+   * @param {Object} res - Express response object
+   * @returns {Promise<void>} Returns 200 with deletion confirmation
+   * @throws {NotFoundError} When task not found or doesn't belong to user (404)
    */
   async delete(req, res) {
     try {
@@ -526,9 +620,17 @@ class TaskController {
       });
     }
   }
-
-  /**
-   * Cambiar estado de completado (CORREGIDO)
+/**
+   * Toggle task completion status (completed/pending)
+   * @async
+   * @param {Object} req - Express request object
+   * @param {Object} req.params - URL parameters
+   * @param {string} req.params.id - Task ID
+   * @param {Object} req.user - Authenticated user
+   * @param {string} req.user._id - User's ID
+   * @param {Object} res - Express response object
+   * @returns {Promise<void>} Returns 200 with updated task
+   * @throws {NotFoundError} When task not found (404)
    */
   async toggleStatus(req, res) {
     try {
