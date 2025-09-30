@@ -6,8 +6,28 @@ const PasswordResetService = require('../services/PasswordResetService');
 const EmailService = require('../services/EmailService');
 const jwt = require('jsonwebtoken');
 
+/**
+ * Controller for authentication and security operations
+ * Handles login, token verification, password reset, and account security
+ * Includes rate limiting, account blocking, and password recovery features
+ * @extends GlobalController
+ */
 class AuthController extends GlobalController {
-  // 🔒 LOGIN CON SEGURIDAD AVANZADA
+ /**
+   * Authenticate user with enhanced security features
+   * Includes rate limiting, account blocking after failed attempts, and IP tracking
+   * @async
+   * @param {Object} req - Express request object
+   * @param {Object} req.body - Request body
+   * @param {string} req.body.correo - User's email address
+   * @param {string} req.body.contrasena - User's password
+   * @param {string} req.ip - Client IP address
+   * @param {Object} res - Express response object
+   * @returns {Promise<void>} Returns 200 with JWT token or error response
+   * @throws {ValidationError} When email or password missing (400)
+   * @throws {AuthenticationError} When credentials incorrect (401)
+   * @throws {AccountLockedError} When account temporarily blocked (423)
+   */
   async login(req, res) {
     try {
       const { correo, contrasena } = req.body;
@@ -106,7 +126,17 @@ class AuthController extends GlobalController {
     }
   }
 
-  // 🔒 VERIFICAR TOKEN CON VALIDACIÓN MEJORADA
+  /**
+   * Verify JWT token validity and user status
+   * @async
+   * @param {Object} req - Express request object
+   * @param {Object} req.headers - Request headers
+   * @param {string} req.headers.authorization - Bearer token
+   * @param {Object} res - Express response object
+   * @returns {Promise<void>} Returns 200 with user data and token info
+   * @throws {AuthenticationError} When token missing, invalid, or expired (401)
+   * @throws {AccountLockedError} When account is blocked (423)
+   */
   async verifyToken(req, res) {
     try {
       const authHeader = req.headers.authorization;
@@ -219,7 +249,20 @@ class AuthController extends GlobalController {
     }
   }
 
-  // 🔒 SOLICITAR RECUPERACIÓN DE CONTRASEÑA
+ /**
+   * Request password reset with rate limiting
+   * Generates reset token and sends email with recovery link
+   * @async
+   * @param {Object} req - Express request object
+   * @param {Object} req.body - Request body
+   * @param {string} req.body.correo - User's email address
+   * @param {string} req.ip - Client IP address
+   * @param {Object} res - Express response object
+   * @returns {Promise<void>} Returns 200 with success message (always, for security)
+   * @throws {ValidationError} When email missing (400)
+   * @throws {RateLimitError} When too many reset requests (429)
+   * @description Always returns success message even if user doesn't exist (security best practice)
+   */
   async requestPasswordReset(req, res) {
     try {
       const { correo } = req.body;
@@ -318,7 +361,21 @@ class AuthController extends GlobalController {
     }
   }
 
-  // 🔒 RESTABLECER CONTRASEÑA CON TOKEN
+/**
+   * Reset user password using valid reset token
+   * Validates token, updates password, unblocks account, and sends confirmation email
+   * @async
+   * @param {Object} req - Express request object
+   * @param {Object} req.body - Request body
+   * @param {string} req.body.token - Password reset token from email
+   * @param {string} req.body.nuevaContrasena - New password (must meet security requirements)
+   * @param {string} req.body.confirmarContrasena - Password confirmation
+   * @param {Object} res - Express response object
+   * @returns {Promise<void>} Returns 200 with confirmation or error response
+   * @throws {ValidationError} When required fields missing or passwords don't match (400)
+   * @throws {ValidationError} When token invalid or expired (400)
+   * @throws {NotFoundError} When user not found (404)
+   */
   async resetPassword(req, res) {
     try {
       const { token, nuevaContrasena, confirmarContrasena } = req.body;
@@ -403,7 +460,15 @@ class AuthController extends GlobalController {
     }
   }
 
-  // 🔒 OBTENER ESTADÍSTICAS DE SEGURIDAD (para debugging/monitoreo)
+  /**
+   * Get security statistics for monitoring and debugging
+   * @async
+   * @param {Object} req - Express request object
+   * @param {Object} res - Express response object
+   * @returns {Promise<void>} Returns 200 with security and reset statistics
+   * @throws {AuthorizationError} When accessed in production environment (403)
+   * @description Only available in development mode
+   */
   async getSecurityStats(req, res) {
     try {
       // Solo en desarrollo o para admins futuros
@@ -435,7 +500,17 @@ class AuthController extends GlobalController {
     }
   }
 
-  // 🔒 CLEANUP MANUAL DE DATOS DE SEGURIDAD
+ /**
+   * Manual cleanup of expired security data and reset tokens
+   * @async
+   * @param {Object} req - Express request object
+   * @param {Object} res - Express response object
+   * @returns {Promise<void>} Returns 200 with cleanup results
+   * @returns {number} returns.securityRecordsDeleted - Number of expired security records deleted
+   * @returns {number} returns.resetTokensDeleted - Number of expired reset tokens deleted
+   * @throws {AuthorizationError} When accessed in production environment (403)
+   * @description Only available in development mode. In production, cleanup runs automatically via cron jobs
+   */
   async cleanupSecurityData(req, res) {
     try {
       // Solo en desarrollo
