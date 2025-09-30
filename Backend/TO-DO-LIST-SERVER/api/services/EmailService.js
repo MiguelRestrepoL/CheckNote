@@ -1,16 +1,81 @@
-// services/EmailService.js - IMPLEMENTACIÓN CON RESEND
+/**
+ * @file EmailService.js
+ * @description Email notification service using Resend API for transactional emails
+ * @module services/EmailService
+ * @requires resend
+ * @requires fs/promises
+ * @requires path
+ * 
+ * @description
+ * Provides email functionality for the application including:
+ * - Password reset notifications
+ * - Password change confirmations
+ * - Account security alerts
+ * - Template management with caching
+ * - Development simulation mode
+ * - HTML email templates with responsive design
+ * 
+ * @example
+ * const emailService = require('./services/EmailService');
+ * 
+ * // Initialize service
+ * await emailService.initialize();
+ * 
+ * // Send password reset email
+ * await emailService.sendPasswordResetEmail('user@example.com', 'reset-token-123', 'John Doe');
+ * 
+ * // Send account blocked alert
+ * await emailService.sendAccountBlockedEmail('user@example.com', 'John Doe', 30, '192.168.1.1');
+ */
 const { Resend } = require('resend');
 const fs = require('fs').promises;
 const path = require('path');
-
+/**
+ * Email service class for managing transactional emails via Resend API
+ * @class
+ */
 class EmailService {
+   /**
+   * Creates an EmailService instance
+   * @constructor
+   */
   constructor() {
+    /**
+     * Resend API client instance
+     * @type {Resend|null}
+     * @private
+     */
     this.resend = null;
+    /**
+     * Configuration status flag
+     * @type {boolean|string}
+     * @description Can be: false (not configured), true (configured), 'simulation' (dev mode)
+     * @private
+     */
     this.isConfigured = false;
+    /**
+     * Template cache for loaded email templates
+     * @type {Map<string, string>}
+     * @private
+     */
     this.templateCache = new Map();
   }
 
-  // CONFIGURAR RESEND
+  /**
+   * Initializes the Resend email service
+   * @async
+   * @returns {Promise<void>}
+   * @throws {Error} If RESEND_API_KEY is missing in production
+   * 
+   * @description
+   * - Validates RESEND_API_KEY environment variable
+   * - Initializes Resend client
+   * - Verifies API configuration
+   * - Falls back to simulation mode in development if configuration fails
+   * 
+   * @example
+   * await emailService.initialize();
+   */
   async initialize() {
     try {
       // Verificar API key de Resend
@@ -50,7 +115,20 @@ class EmailService {
     }
   }
 
-  // VERIFICAR CONFIGURACIÓN DE RESEND
+   /**
+   * Verifies Resend API configuration
+   * @async
+   * @returns {Promise<void>}
+   * @throws {Error} If Resend client is not initialized or API key format is invalid
+   * 
+   * @description
+   * - Checks if Resend client exists
+   * - Validates API key format (should start with 're_')
+   * - Logs verification status
+   * 
+   * @example
+   * await emailService.verifyConfiguration();
+   */
   async verifyConfiguration() {
     try {
       // Resend no tiene un método verify explícito, 
@@ -72,7 +150,21 @@ class EmailService {
     }
   }
 
-  // CARGAR TEMPLATE DE EMAIL (sin cambios)
+  /**
+   * Loads an email template from file system or cache
+   * @async
+   * @param {string} templateName - Name of the template to load (without .html extension)
+   * @returns {Promise<string>} HTML template content
+   * 
+   * @description
+   * - Checks template cache first for performance
+   * - Attempts to load from ../templates/emails/{templateName}.html
+   * - Falls back to default template if file not found
+   * - Caches loaded templates for future use
+   * 
+   * @example
+   * const template = await emailService.loadTemplate('password-reset');
+   */
   async loadTemplate(templateName) {
     try {
       if (this.templateCache.has(templateName)) {
@@ -97,7 +189,27 @@ class EmailService {
     }
   }
 
-  // TEMPLATES POR DEFECTO OPTIMIZADOS PARA RESEND
+  /**
+   * Gets default HTML email templates optimized for Resend
+   * @param {string} templateName - Name of the template
+   * @returns {string} HTML template content
+   * 
+   * @description
+   * Available templates:
+   * - 'password-reset': Password recovery email with reset link
+   * - 'password-changed': Confirmation email after password change
+   * - 'account-blocked': Security alert for blocked accounts
+   * 
+   * Templates include:
+   * - Responsive design for mobile/desktop
+   * - Variable placeholders {{VARIABLE_NAME}}
+   * - Professional styling with gradients and shadows
+   * - Security warnings and action buttons
+   * - Footer with branding
+   * 
+   * @example
+   * const template = emailService.getDefaultTemplate('password-reset');
+   */
   getDefaultTemplate(templateName) {
   const templates = {
     'password-reset': `
@@ -495,7 +607,24 @@ class EmailService {
     return templates[templateName] || '<p>Template no encontrado</p>';
   }
 
-  // REEMPLAZAR VARIABLES EN TEMPLATE (sin cambios)
+  /**
+   * Replaces variable placeholders in email template
+   * @param {string} template - HTML template with {{VARIABLE}} placeholders
+   * @param {Object} variables - Key-value pairs for variable replacement
+   * @returns {string} Processed HTML with variables replaced
+   * 
+   * @description
+   * - Searches for {{VARIABLE_NAME}} patterns
+   * - Replaces with corresponding values from variables object
+   * - Handles missing variables gracefully (replaces with empty string)
+   * 
+   * @example
+   * const html = emailService.replaceVariables(
+   *   '<p>Hello {{USER_NAME}}</p>',
+   *   { USER_NAME: 'John' }
+   * );
+   * // Returns: '<p>Hello John</p>'
+   */
   replaceVariables(template, variables) {
     let result = template;
     
@@ -507,7 +636,42 @@ class EmailService {
     return result;
   }
 
-  // ENVIAR EMAIL CON RESEND
+  /**
+   * Sends an email using Resend API
+   * @async
+   * @param {string} to - Recipient email address
+   * @param {string} subject - Email subject line
+   * @param {string} templateName - Name of the template to use
+   * @param {Object} [variables={}] - Variables to inject into template
+   * @returns {Promise<Object>} Send result
+   * @property {boolean} success - Whether email was sent successfully
+   * @property {string} messageId - Unique message identifier from Resend
+   * @property {string} provider - Email provider used ('resend')
+   * @throws {Error} If email sending fails
+   * 
+   * @description
+   * - Initializes service if not already configured
+   * - Handles simulation mode in development
+   * - Loads and processes email template
+   * - Merges default variables with custom variables
+   * - Sends email via Resend API
+   * - Logs success/failure details
+   * 
+   * Default variables automatically included:
+   * - APP_NAME: Application name from environment
+   * - FRONTEND_URL: Frontend URL from environment
+   * - CURRENT_YEAR: Current year
+   * - SUPPORT_EMAIL: Support email address
+   * - LOGO_URL: Logo URL from environment
+   * 
+   * @example
+   * const result = await emailService.sendEmail(
+   *   'user@example.com',
+   *   'Welcome!',
+   *   'welcome-template',
+   *   { USER_NAME: 'John Doe' }
+   * );
+   */
   async sendEmail(to, subject, templateName, variables = {}) {
     try {
       if (!this.isConfigured) {
@@ -572,7 +736,19 @@ class EmailService {
     }
   }
 
-  // EXTRAER DOMINIO PARA EMAIL FROM
+  /**
+   * Extracts domain from FRONTEND_URL for email "from" address
+   * @returns {string} Domain name or 'localhost' if extraction fails
+   * 
+   * @description
+   * - Parses FRONTEND_URL environment variable
+   * - Extracts hostname from URL
+   * - Falls back to 'localhost' if parsing fails
+   * 
+   * @example
+   * // FRONTEND_URL = 'https://example.com'
+   * const domain = emailService.extractDomain(); // Returns: 'example.com'
+   */
   extractDomain() {
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     try {
@@ -583,7 +759,21 @@ class EmailService {
     }
   }
 
-  // CONVERTIR HTML A TEXTO PLANO (Resend lo hace automáticamente, pero útil para debug)
+  /**
+   * Converts HTML to plain text (utility method)
+   * @param {string} html - HTML content to convert
+   * @returns {string} Plain text version
+   * 
+   * @description
+   * - Strips HTML tags
+   * - Decodes HTML entities
+   * - Normalizes whitespace
+   * - Note: Resend automatically generates text version, this is for debugging
+   * 
+   * @example
+   * const text = emailService.htmlToText('<p>Hello <strong>World</strong></p>');
+   * // Returns: 'Hello World'
+   */
   htmlToText(html) {
     return html
       .replace(/<[^>]*>/g, '')
@@ -595,7 +785,29 @@ class EmailService {
       .trim();
   }
 
-  // EMAIL DE RECUPERACIÓN DE CONTRASEÑA
+  /**
+   * Sends password reset email with secure token
+   * @async
+   * @param {string} email - User's email address
+   * @param {string} resetToken - Secure reset token
+   * @param {string} [userName=null] - User's display name (defaults to email prefix)
+   * @returns {Promise<Object>} Send result from Resend
+   * @throws {Error} If email sending fails
+   * 
+   * @description
+   * - Uses 'password-reset' template
+   * - Generates reset URL with token
+   * - Includes security warnings
+   * - Token visible in development mode for debugging
+   * - Expiration time: 1 hour
+   * 
+   * @example
+   * await emailService.sendPasswordResetEmail(
+   *   'user@example.com',
+   *   'abc123resettoken',
+   *   'John Doe'
+   * );
+   */
   async sendPasswordResetEmail(email, resetToken, userName = null) {
     try {
       const resetUrl = `${process.env.RESET_URL2 || 'https://check-note-fend.vercel.app/olvidar-password2'}?token=${resetToken}`;
@@ -623,7 +835,28 @@ class EmailService {
     }
   }
 
-  // EMAIL DE CONFIRMACIÓN DE CAMBIO
+  /**
+   * Sends password change confirmation email
+   * @async
+   * @param {string} email - User's email address
+   * @param {string} [userName=null] - User's display name (defaults to email prefix)
+   * @param {string} [ipAddress=null] - IP address where change was made
+   * @returns {Promise<Object>} Send result from Resend
+   * @throws {Error} If email sending fails
+   * 
+   * @description
+   * - Uses 'password-changed' template
+   * - Includes timestamp and IP address for security
+   * - Warns user if they didn't make the change
+   * - Provides support contact information
+   * 
+   * @example
+   * await emailService.sendPasswordChangedConfirmation(
+   *   'user@example.com',
+   *   'John Doe',
+   *   '192.168.1.1'
+   * );
+   */
   async sendPasswordChangedConfirmation(email, userName = null, ipAddress = null) {
     try {
       const now = new Date();
@@ -648,7 +881,30 @@ class EmailService {
     }
   }
 
-  // EMAIL DE CUENTA BLOQUEADA
+  /**
+   * Sends account blocked security alert email
+   * @async
+   * @param {string} email - User's email address
+   * @param {string} [userName=null] - User's display name (defaults to email prefix)
+   * @param {number} [minutesLeft=30] - Minutes remaining until unblock
+   * @param {string} [ipAddress=null] - IP address of failed attempts
+   * @returns {Promise<Object>} Send result from Resend
+   * @throws {Error} If email sending fails
+   * 
+   * @description
+   * - Uses 'account-blocked' template
+   * - Calculates unblock time based on minutesLeft
+   * - Includes security recommendations
+   * - Provides recovery options
+   * 
+   * @example
+   * await emailService.sendAccountBlockedEmail(
+   *   'user@example.com',
+   *   'John Doe',
+   *   30,
+   *   '192.168.1.1'
+   * );
+   */
   async sendAccountBlockedEmail(email, userName = null, minutesLeft = 30, ipAddress = null) {
     try {
       const unblockTime = new Date(Date.now() + minutesLeft * 60 * 1000);
@@ -674,7 +930,21 @@ class EmailService {
     }
   }
 
-  // EMAIL DE PRUEBA
+  /**
+   * Sends test email for configuration verification
+   * @async
+   * @param {string} email - Email address to send test to
+   * @returns {Promise<Object>} Send result from Resend
+   * @throws {Error} If email sending fails
+   * 
+   * @description
+   * - Uses 'password-reset' template for testing
+   * - Includes test placeholder values
+   * - Useful for verifying email service configuration
+   * 
+   * @example
+   * await emailService.sendTestEmail('admin@example.com');
+   */
   async sendTestEmail(email) {
     try {
       const result = await this.sendEmail(
@@ -695,7 +965,27 @@ class EmailService {
     }
   }
 
-  // OBTENER ESTADÍSTICAS
+  /**
+   * Gets email service statistics and status
+   * @returns {Object} Service statistics
+   * @property {boolean|string} configured - Configuration status
+   * @property {string} provider - Email provider name ('resend')
+   * @property {number} templatesLoaded - Number of templates in cache
+   * @property {boolean} client - Whether Resend client is initialized
+   * 
+   * @description
+   * Provides insight into email service state for monitoring and debugging
+   * 
+   * @example
+   * const stats = emailService.getStats();
+   * console.log(stats);
+   * // {
+   * //   configured: true,
+   * //   provider: 'resend',
+   * //   templatesLoaded: 3,
+   * //   client: true
+   * // }
+   */
   getStats() {
     return {
       configured: this.isConfigured,
@@ -706,7 +996,19 @@ class EmailService {
   }
 }
 
-// Singleton para usar en toda la aplicación
+/**
+ * Singleton instance of EmailService for application-wide use
+ * @type {EmailService}
+ * @constant
+ * 
+ * @description
+ * Pre-instantiated service to ensure single instance across application
+ * 
+ * @example
+ * const emailService = require('./services/EmailService');
+ * await emailService.initialize();
+ * await emailService.sendPasswordResetEmail('user@example.com', 'token123');
+ */
 const emailService = new EmailService();
 
 module.exports = emailService;
