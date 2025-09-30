@@ -2,10 +2,20 @@ const jwt = require('jsonwebtoken');
 const UserDAO = require('../dao/UserDAO');
 
 /**
- * Middleware para verificar JWT en rutas protegidas
- * @param {Request} req - Request de Express
- * @param {Response} res - Response de Express  
- * @param {Function} next - Siguiente middleware
+ * JWT authentication middleware for protected routes
+ * Validates JWT token, verifies user existence, and attaches user data to request
+ * @async
+ * @param {Object} req - Express request object
+ * @param {Object} req.headers - Request headers
+ * @param {string} req.headers.authorization - Bearer token format: "Bearer <token>"
+ * @param {Object} res - Express response object
+ * @param {Function} next - Express next middleware function
+ * @returns {Promise<void>} Calls next() if authentication succeeds, sends error response otherwise
+ * @throws {AuthenticationError} When token is missing (401)
+ * @throws {AuthenticationError} When token is expired (401)
+ * @throws {AuthenticationError} When token is invalid (401)
+ * @throws {AuthenticationError} When user not found (401)
+ * @description Attaches user object to req.user with properties: id, correo, nombres, apellidos
  */
 const authenticateToken = async (req, res, next) => {
   try {
