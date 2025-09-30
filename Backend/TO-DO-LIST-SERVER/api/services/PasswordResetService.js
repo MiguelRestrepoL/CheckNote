@@ -3,7 +3,10 @@ const mongoose = require('mongoose');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 
-// 🔒 ESQUEMA PARA TOKENS DE RECUPERACIÓN DE CONTRASEÑA
+/**
+ * Mongoose schema for password reset tokens
+ * @private
+ */
 const PasswordResetTokenSchema = new mongoose.Schema({
   email: {
     type: String,
@@ -37,9 +40,28 @@ const PasswordResetTokenSchema = new mongoose.Schema({
 
 const PasswordResetToken = mongoose.models.PasswordResetToken || 
                           mongoose.model('PasswordResetToken', PasswordResetTokenSchema);
-
+/**
+ * Service for secure password reset token management
+ * Implements cryptographically secure token generation using SHA-256 hashing
+ * Tokens expire after 1 hour and can only be used once
+ * Includes rate limiting to prevent abuse
+ */
 class PasswordResetService {
-  // 🔒 GENERAR TOKEN DE RECUPERACIÓN
+  /**
+   * Generate cryptographically secure password reset token
+   * Only one active token allowed per user at a time
+   * @async
+   * @static
+   * @param {string} email - User's email address
+   * @param {string} ip - Client IP address
+   * @param {string} [userAgent=null] - Client user agent string
+   * @returns {Promise<Object>} Token information
+   * @returns {string} returns.token - Reset token (64 char hex string, only returned once)
+   * @returns {Date} returns.expiresAt - Token expiration timestamp (1 hour from creation)
+   * @returns {string} returns.tokenId - MongoDB document ID
+   * @throws {Error} When database operation fails
+   * @description Token is stored as SHA-256 hash in database. Plain token removed after initial save.
+   */
   static async generateResetToken(email, ip, userAgent = null) {
     try {
       email = email.toLowerCase();
@@ -88,7 +110,19 @@ class PasswordResetService {
     }
   }
 
-  // 🔒 VALIDAR TOKEN DE RECUPERACIÓN
+  /**
+   * Validate password reset token without consuming it
+   * @async
+   * @static
+   * @param {string} token - Reset token to validate (64 char hex string)
+   * @returns {Promise<Object>} Validation result
+   * @returns {boolean} returns.valid - Whether token is valid
+   * @returns {string} [returns.email] - Email associated with token (if valid)
+   * @returns {string} [returns.tokenId] - Token document ID (if valid)
+   * @returns {Date} [returns.createdAt] - Token creation timestamp (if valid)
+   * @returns {string} [returns.error] - Error message (if invalid)
+   * @description Checks token format, hash match, expiration, and usage status
+   */
   static async validateResetToken(token) {
     try {
       if (!token || token.length !== 64) { // Token debe ser 64 caracteres hex
@@ -124,7 +158,21 @@ class PasswordResetService {
     }
   }
 
-  // 🔒 USAR TOKEN PARA CAMBIAR CONTRASEÑA
+  /**
+   * Use password reset token to authorize password change
+   * Marks token as used to prevent reuse
+   * @async
+   * @static
+   * @param {string} token - Reset token (64 char hex string)
+   * @param {string} newPassword - New password (validation performed by calling code)
+   * @returns {Promise<Object>} Usage result
+   * @returns {boolean} returns.success - Whether token was successfully consumed
+   * @returns {string} [returns.email] - Email associated with token (if success)
+   * @returns {string} [returns.tokenId] - Token document ID (if success)
+   * @returns {string} [returns.error] - Error message (if failed)
+   * @throws {Error} When database operation fails
+   * @description Token can only be used once. Validates before marking as used.
+   */
   static async useResetToken(token, newPassword) {
     try {
       // Validar token primero
@@ -172,7 +220,14 @@ class PasswordResetService {
     }
   }
 
-  // 🔒 LIMPIAR TOKENS EXPIRADOS
+  /**
+   * Clean up expired and old used tokens
+   * @async
+   * @static
+   * @returns {Promise<number>} Number of tokens deleted
+   * @throws {Error} When database operation fails
+   * @description Removes used tokens older than 24h and expired unused tokens
+   */
   static async cleanupExpiredTokens() {
     try {
       const result = await PasswordResetToken.deleteMany({
@@ -190,7 +245,25 @@ class PasswordResetService {
     }
   }
 
-  // 🔒 OBTENER ESTADÍSTICAS DE RECUPERACIÓN
+   /**
+   * Get password reset statistics for system or specific user
+   * @async
+   * @static
+   * @param {string} [email=null] - Email for user-specific stats, null for system stats
+   * @returns {Promise<Object>} Statistics object
+   * @returns {Object} [returns.user] - User-specific statistics (if email provided)
+   * @returns {string} returns.user.email - User email
+   * @returns {number} returns.user.totalRequests - Total reset requests
+   * @returns {number} returns.user.successfulResets - Completed resets
+   * @returns {Date} returns.user.lastRequest - Most recent request timestamp
+   * @returns {Date} returns.user.lastReset - Most recent successful reset timestamp
+   * @returns {Object} [returns.system] - System-wide statistics (if no email)
+   * @returns {number} returns.system.totalRequests - Total reset requests
+   * @returns {number} returns.system.successfulResets - Total successful resets
+   * @returns {number} returns.system.activeTokens - Currently valid unused tokens
+   * @returns {number} returns.system.successRate - Success rate percentage
+   * @throws {Error} When database operation fails
+   */
   static async getResetStats(email = null) {
     try {
       const stats = {};
@@ -232,7 +305,15 @@ class PasswordResetService {
     }
   }
 
-  // 🔒 INVALIDAR TODOS LOS TOKENS DE UN USUARIO
+  /**
+   * Invalidate all unused tokens for a user
+   * @async
+   * @static
+   * @param {string} email - User's email address
+   * @returns {Promise<number>} Number of tokens invalidated
+   * @throws {Error} When database operation fails
+   * @description Called after successful password change or suspicious activity
+   */
   static async invalidateUserTokens(email) {
     try {
       const result = await PasswordResetToken.updateMany(
@@ -248,7 +329,18 @@ class PasswordResetService {
     }
   }
 
-  // 🔒 VERIFICAR SI USUARIO PUEDE SOLICITAR RESET
+  /**
+   * Check if user can request password reset (rate limiting)
+   * @async
+   * @static
+   * @param {string} email - User's email address
+   * @returns {Promise<Object>} Rate limit status
+   * @returns {boolean} returns.canRequest - Whether new request is allowed
+   * @returns {number} returns.recentRequests - Number of requests in last hour
+   * @returns {number} returns.maxAllowed - Maximum allowed requests (3 per hour)
+   * @returns {Date} [returns.nextAllowedAt] - When next request will be allowed (if blocked)
+   * @description Limits users to 3 reset requests per hour to prevent abuse
+   */
   static async canRequestReset(email) {
     try {
       const oneHourAgo = new Date(Date.now() - 3600 * 1000);
@@ -275,13 +367,26 @@ class PasswordResetService {
     }
   }
 
-  // 🔒 GENERAR CÓDIGO DE RECUPERACIÓN CORTO (alternativa a token largo)
+   /**
+   * Generate short 6-digit recovery code as alternative to token
+   * @static
+   * @returns {string} 6-digit numeric code
+   * @description Alternative authentication method for SMS or similar use cases
+   */
   static generateShortCode() {
     // Generar código de 6 dígitos para usar como alternativa
     return Math.floor(100000 + Math.random() * 900000).toString();
   }
 
-  // 🔒 VALIDAR FORMATO DE CONTRASEÑA PARA RESET
+  /**
+   * Validate new password against security requirements
+   * @static
+   * @param {string} password - Password to validate
+   * @returns {Object} Validation result
+   * @returns {boolean} returns.valid - Whether password meets all requirements
+   * @returns {string[]} returns.errors - Array of validation error messages
+   * @description Requirements: 8-128 chars, lowercase, uppercase, number, special char, no weak patterns
+   */
   static validateNewPassword(password) {
     const errors = [];
 
