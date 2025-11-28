@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfil - CheckNote</title>
+    <link rel="stylesheet" href="./GlobalCSS3.css">
+</head>
+<body>
+    <div class="page-root">
+        <!-- TOPBAR -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <img src="/usuario.png" alt="usuario" class="icon user-icon" />
+                <span class="username" id="topbar-username">Usuario</span>
+            </div>
+            <div class="topbar-center">
+                <div class="search-wrap">
+                    <img src="/search.png" alt="buscar" class="search-icon" />
+                    <input class="search-input" placeholder="Buscar en configuración..." />
+                </div>
+            </div>
+            <div class="topbar-right">
+                <a href="home.html">
+                    <img src="/back.png" alt="inicio" class="icon" />
+                </a>
+            </div>
+        </header>
+
+        <!-- MAIN -->
+        <main class="main">
+            <div class="center-column" style="max-width: 1000px; gap: 0">
+                
+                <!-- Loading Screen -->
+                <div id="loading-container" class="loading-container">
+                    <h3>Cargando tu perfil...</h3>
+                    <div class="loading-icon">⏳</div>
+                </div>
+
+                <!-- Profile Content -->
+                <div id="profile-container" class="profile-container hidden">
+                    <!-- SIDEBAR -->
+                    <div class="profile-sidebar">
+                        <div class="brand-logo">
+                            <div class="brand-icon">✓</div>
+                            <span class="brand-text">Checknote</span>
+                        </div>
+
+                        <nav class="sidebar-nav">
+                            <button id="nav-personal" class="nav-button active">
+                                INFO. PERSONAL
+                            </button>
+                            <button id="nav-cuenta" class="nav-button">
+                                INFO. CUENTA
+                            </button>
+                            <button id="nav-seguridad" class="nav-button">
+                                SEGURIDAD
+                            </button>
+                            <button id="nav-logout" class="nav-button danger">
+                                CERRAR SESIÓN
+                            </button>
+                        </nav>
+                    </div>
+
+                    <!-- CONTENIDO -->
+                    <div class="task-card profile-content">
+                        <!-- Mensajes -->
+                        <div id="error-message" class="status-message error hidden"></div>
+                        <div id="success-message" class="status-message success hidden"></div>
+
+                        <!-- INFO. PERSONAL -->
+                        <div id="section-personal" class="fade-in">
+                            <h2 class="task-title section-header">INFO. PERSONAL</h2>
+                            <p class="section-description">
+                                Aquí puedes actualizar tu información personal básica
+                            </p>
+
+                            <form id="form-personal" class="form-container">
+                                <!-- Campo NOMBRE - el contenedor limita el ancho -->
+                                <div class="form-field field-md">
+                                    <div class="form-label">NOMBRE ✏️</div>
+                                    <input
+                                        type="text"
+                                        id="input-nombres"
+                                        name="nombres"
+                                        placeholder="Tu nombre"
+                                        class="form-input"
+                                        required
+                                    />
+                                </div>
+                                
+                                <!-- Campo APELLIDO - el contenedor limita el ancho -->
+                                <div class="form-field field-md">
+                                    <div class="form-label">APELLIDO ✏️</div>
+                                    <input
+                                        type="text"
+                                        id="input-apellidos"
+                                        name="apellidos"
+                                        placeholder="Tus apellidos"
+                                        class="form-input"
+                                        required
+                                    />
+                                </div>
+
+                                <!-- Campo EDAD - contenedor más pequeño -->
+                                <div class="form-field field-sm">
+                                    <div class="form-label">EDAD ✏️</div>
+                                    <input
+                                        type="number"
+                                        id="input-edad"
+                                        name="edad"
+                                        placeholder="Tu edad"
+                                        min="13"
+                                        max="120"
+                                        class="form-input"
+                                    />
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    id="btn-personal"
+                                    class="action-button primary"
+                                >
+                                    Guardar Cambios
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- INFO. CUENTA -->
+                        <div id="section-cuenta" class="fade-in hidden">
+                            <h2 class="task-title section-header">INFO. CUENTA</h2>
+                            <p class="section-description">
+                                Información importante de tu cuenta y configuración
+                            </p>
+
+                            <form id="form-cuenta" class="form-container">
+                                <!-- Campo EMAIL -->
+                                <div class="form-field field-md">
+                                    <div class="form-label">CORREO ✏️</div>
+                                    <input
+                                        type="email"
+                                        id="input-email"
+                                        name="email"
+                                        placeholder="tu@email.com"
+                                        class="form-input"
+                                        required
+                                    />
+                                </div>
+
+                                <!-- Campo FECHA -->
+                                <div class="form-field field-sm">
+                                    <div class="form-label">CREADO EL</div>
+                                    <input
+                                        type="date"
+                                        id="input-fecha"
+                                        disabled
+                                        class="form-input"
+                                    />
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    id="btn-cuenta"
+                                    class="action-button primary"
+                                >
+                                    Actualizar Email
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- SEGURIDAD -->
+                        <div id="section-seguridad" class="fade-in hidden">
+                            <h2 class="task-title section-header">SEGURIDAD</h2>
+                            <p class="section-description">
+                                Configuraciones de seguridad y privacidad de tu cuenta
+                            </p>
+
+                            <form id="form-seguridad" class="form-container mb-xl">
+                                <!-- Campo CONTRASEÑA ACTUAL -->
+                                <div class="form-field field-sm">
+                                    <div class="form-label">CONTRASEÑA ACTUAL</div>
+                                    <input
+                                        type="password"
+                                        id="input-current-password"
+                                        name="currentPassword"
+                                        placeholder="Tu contraseña actual"
+                                        class="form-input"
+                                        required
+                                    />
+                                </div>
+
+                                <!-- Campo NUEVA CONTRASEÑA -->
+                                <div class="form-field field-sm">
+                                    <div class="form-label">NUEVA CONTRASEÑA</div>
+                                    <input
+                                        type="password"
+                                        id="input-password"
+                                        name="password"
+                                        placeholder="Nueva contraseña (mín. 8 caracteres)"
+                                        class="form-input"
+                                        required
+                                        minlength="8"
+                                    />
+                                </div>
+
+                                <!-- Campo CONFIRMAR CONTRASEÑA -->
+                                <div class="form-field field-sm">
+                                    <div class="form-label">CONFIRMAR CONTRASEÑA</div>
+                                    <input
+                                        type="password"
+                                        id="input-confirm-password"
+                                        name="confirmPassword"
+                                        placeholder="Confirmar nueva contraseña"
+                                        class="form-input"
+                                        required
+                                    />
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    id="btn-seguridad"
+                                    class="action-button info"
+                                >
+                                    CAMBIAR CONTRASEÑA
+                                </button>
+                            </form>
+
+                            <div class="danger-zone">
+                                <h3 class="danger-zone-title">Zona Peligrosa</h3>
+                                <p class="danger-zone-description">
+                                    Esta acción eliminará permanentemente tu cuenta y todos tus datos
+                                </p>
+                                <button
+                                    id="btn-delete-account"
+                                    class="action-button danger"
+                                >
+                                    ELIMINAR CUENTA
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- FOOTER -->
+        <footer class="footer">
+            <a href="home.html" class="footer-link">
+                <img src="/home.png" alt="inicio" class="icon" />
+                <span class="footer-text">Inicio</span>
+            </a>
+        </footer>
+    </div>
+
+    <script>
+        /**
+         * @file Gestión de perfil de usuario - CheckNote
+         * @description Permite ver y editar información personal, de cuenta y seguridad
+         */
+
+        // ============================================
+        // ESTADO GLOBAL
+        // ============================================
+        
+        /** @type {string} Sección activa actual */
+        let activeSection = "personal";
+        
+        /** @type {boolean} Estado de carga durante peticiones */
+        let loading = false;
+        
+        /** @type {boolean} Estado de carga inicial de datos */
+        let loadingData = true;
+
+        /** @type {Object} Datos personales del usuario */
+        let personalData = {
+            nombres: "",
+            apellidos: "",
+            edad: ""
+        };
+
+        /** @type {Object} Datos de cuenta del usuario */
+        let cuentaData = {
+            email: "",
+            fechaCreacion: ""
+        };
+
+        /** @type {Object} Caché de referencias DOM */
+        const elements = {};
+
+        // ============================================
+        // INICIALIZACIÓN DE ELEMENTOS DOM
+        // ============================================
+
+        /**
+         * Cachea todas las referencias a elementos DOM
+         */
+        function initializeElements() {
+            elements.loadingContainer = document.getElementById('loading-container');
+            elements.profileContainer = document.getElementById('profile-container');
+            elements.errorMessage = document.getElementById('error-message');
+            elements.successMessage = document.getElementById('success-message');
+            elements.topbarUsername = document.getElementById('topbar-username');
+            
+            elements.navPersonal = document.getElementById('nav-personal');
+            elements.navCuenta = document.getElementById('nav-cuenta');
+            elements.navSeguridad = document.getElementById('nav-seguridad');
+            elements.navLogout = document.getElementById('nav-logout');
+            
+            elements.sectionPersonal = document.getElementById('section-personal');
+            elements.sectionCuenta = document.getElementById('section-cuenta');
+            elements.sectionSeguridad = document.getElementById('section-seguridad');
+            
+            elements.formPersonal = document.getElementById('form-personal');
+            elements.formCuenta = document.getElementById('form-cuenta');
+            elements.formSeguridad = document.getElementById('form-seguridad');
+            
+            elements.btnPersonal = document.getElementById('btn-personal');
+            elements.btnCuenta = document.getElementById('btn-cuenta');
+            elements.btnSeguridad = document.getElementById('btn-seguridad');
+            elements.btnDeleteAccount = document.getElementById('btn-delete-account');
+            
+            elements.inputNombres = document.getElementById('input-nombres');
+            elements.inputApellidos = document.getElementById('input-apellidos');
+            elements.inputEdad = document.getElementById('input-edad');
+            elements.inputEmail = document.getElementById('input-email');
+            elements.inputFecha = document.getElementById('input-fecha');
+            elements.inputCurrentPassword = document.getElementById('input-current-password');
+            elements.inputPassword = document.getElementById('input-password');
+            elements.inputConfirmPassword = document.getElementById('input-confirm-password');
+        }
+
+        // ============================================
+        // GESTIÓN DE MENSAJES
+        // ============================================
+
+        /**
+         * Muestra mensaje de éxito o error al usuario
+         * @param {'error'|'success'} type - Tipo de mensaje
+         * @param {string} message - Texto del mensaje
+         * @param {number} duration - Duración en ms (0 = permanente)
+         */
+        function showMessage(type, message, duration = 5000) {
+            hideMessage('error');
+            hideMessage('success');
+            
+            const messageEl = elements[type + 'Message'];
+            if (messageEl) {
+                messageEl.textContent = message;
+                messageEl.classList.remove('hidden');
+                
+                if (duration > 0) {
+                    setTimeout(() => hideMessage(type), duration);
+                }
+            }
+        }
+
+        /**
+         * Oculta mensaje de un tipo específico
+         * @param {'error'|'success'} type - Tipo de mensaje a ocultar
+         */
+        function hideMessage(type) {
+            const messageEl = elements[type + 'Message'];
+            if (messageEl) {
+                messageEl.classList.add('hidden');
+            }
+        }
+
+        // ============================================
+        // GESTIÓN DE ESTADO DE CARGA
+        // ============================================
+
+        /**
+         * Controla el estado de carga de un botón
+         * @param {HTMLElement} buttonElement - Botón a modificar
+         * @param {boolean} isLoading - Si está en estado de carga
+         */
+        function setLoading(buttonElement, isLoading) {
+            if (!buttonElement) return;
+            
+            if (isLoading) {
+                buttonElement.disabled = true;
+                buttonElement.classList.add('loading');
+                buttonElement.textContent = buttonElement.textContent.includes('Guardando') ? 'Guardando...' :
+                                          buttonElement.textContent.includes('Cambiando') ? 'Cambiando...' :
+                                          buttonElement.textContent.includes('Actualizar') ? 'Actualizando...' : 'Procesando...';
+            } else {
+                buttonElement.disabled = false;
+                buttonElement.classList.remove('loading');
+                if (buttonElement === elements.btnPersonal) buttonElement.textContent = 'Guardar Cambios';
+                if (buttonElement === elements.btnCuenta) buttonElement.textContent = 'Actualizar Email';
+                if (buttonElement === elements.btnSeguridad) buttonElement.textContent = 'CAMBIAR CONTRASEÑA';
+            }
+        }
+
+        // ============================================
+        // NAVEGACIÓN ENTRE SECCIONES
+        // ============================================
+
+        /**
+         * Cambia la sección visible del perfil
+         * @param {'personal'|'cuenta'|'seguridad'} sectionName - Sección a mostrar
+         */
+        function showSection(sectionName) {
+            if (!elements.sectionPersonal || !elements.sectionCuenta || !elements.sectionSeguridad) {
+                return;
+            }
+            
+            // Ocultar todas las secciones
+            elements.sectionPersonal.classList.add('hidden');
+            elements.sectionCuenta.classList.add('hidden');
+            elements.sectionSeguridad.classList.add('hidden');
+            
+            // Desactivar todos los botones de navegación
+            if (elements.navPersonal) elements.navPersonal.classList.remove('active');
+            if (elements.navCuenta) elements.navCuenta.classList.remove('active');
+            if (elements.navSeguridad) elements.navSeguridad.classList.remove('active');
+            
+            // Mostrar la sección activa
+            activeSection = sectionName;
+            const targetSection = elements['section' + sectionName.charAt(0).toUpperCase() + sectionName.slice(1)];
+            const targetNavButton = elements['nav' + sectionName.charAt(0).toUpperCase() + sectionName.slice(1)];
+            
+            if (targetSection) {
+                targetSection.classList.remove('hidden');
+            }
+            
+            if (targetNavButton) {
+                targetNavButton.classList.add('active');
+            }
+            
+            hideMessage('error');
+            hideMessage('success');
+        }
+
+        // ============================================
+        // CARGA DE DATOS DEL USUARIO
+        // ============================================
+
+        /**
+         * Carga los datos del usuario desde el API
+         * @async
+         */
+        async function cargarDatosUsuario() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            try {
+                loadingData = true;
+                hideMessage('error');
+                
+                const response = await fetch("https://checknote-oh1u.onrender.com/api/v1/users/me", {
+                    method: "GET",
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        localStorage.clear();
+                        showMessage('error', "Tu sesión ha expirado. Redirigiendo al login...");
+                        setTimeout(() => window.location.href = 'login.html', 2000);
+                        return;
+                    }
+                    throw new Error(`Error ${response.status}: ${response.statusText}`);
+                }
+
+                const responseData = await response.json();
+                let userData = responseData.data?.usuario || responseData.user || responseData.usuario || responseData;
+                
+                if (!userData.nombres && responseData.data) {
+                    userData = responseData.data;
+                }
+
+                const fechaCreacion = userData.createdAt || userData.fechaRegistro ? 
+                    new Date(userData.createdAt || userData.fechaRegistro).toISOString().split('T')[0] : 
+                    new Date().toISOString().split('T')[0];
+
+                personalData = {
+                    nombres: userData.nombres || "",
+                    apellidos: userData.apellidos || "",
+                    edad: userData.edad ? userData.edad.toString() : ""
+                };
+
+                cuentaData = {
+                    email: userData.correo || userData.email || "",
+                    fechaCreacion
+                };
+
+                updateFormInputs();
+                localStorage.setItem('userName', userData.nombres || "");
+                localStorage.setItem('user', JSON.stringify(userData));
+                if (elements.topbarUsername) {
+                    elements.topbarUsername.textContent = userData.nombres || 'Usuario';
+                }
+
+            } catch (err) {
+                showMessage('error', "Error al cargar los datos: " + err.message);
+                
+                const storedUser = localStorage.getItem('user');
+                if (storedUser) {
+                    try {
+                        const parsedUser = JSON.parse(storedUser);
+                        personalData = {
+                            nombres: parsedUser.nombres || localStorage.getItem('userName') || "",
+                            apellidos: parsedUser.apellidos || "",
+                            edad: parsedUser.edad ? parsedUser.edad.toString() : ""
+                        };
+                        cuentaData = {
+                            email: parsedUser.correo || parsedUser.email || "",
+                            fechaCreacion: parsedUser.createdAt ? 
+                                new Date(parsedUser.createdAt).toISOString().split('T')[0] : 
+                                new Date().toISOString().split('T')[0]
+                        };
+                        updateFormInputs();
+                        if (elements.topbarUsername) {
+                            elements.topbarUsername.textContent = personalData.nombres || 'Usuario';
+                        }
+                    } catch (parseError) {
+                        console.error('Error parsing stored data:', parseError);
+                    }
+                }
+            } finally {
+                loadingData = false;
+                if (elements.loadingContainer) elements.loadingContainer.classList.add('hidden');
+                if (elements.profileContainer) elements.profileContainer.classList.remove('hidden');
+            }
+        }
+
+        /**
+         * Actualiza los inputs de formularios con datos cargados
+         */
+        function updateFormInputs() {
+            if (elements.inputNombres) elements.inputNombres.value = personalData.nombres;
+            if (elements.inputApellidos) elements.inputApellidos.value = personalData.apellidos;
+            if (elements.inputEdad) elements.inputEdad.value = personalData.edad;
+            if (elements.inputEmail) elements.inputEmail.value = cuentaData.email;
+            if (elements.inputFecha) elements.inputFecha.value = cuentaData.fechaCreacion;
+        }
+
+        // ============================================
+        // PETICIONES AL API
+        // ============================================
+
+        /**
+         * Realiza petición PUT al API con autenticación
+         * @async
+         * @param {string} endpoint - Ruta del endpoint (ej: '/users/me')
+         * @param {Object} data - Datos a enviar
+         * @param {boolean} isPasswordChange - Si es cambio de contraseña
+         * @returns {Promise<Object|null>} Respuesta parseada o null
+         */
+        async function makeRequest(endpoint, data, isPasswordChange = false) {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                showMessage('error', "No se encontró token de autenticación");
+                window.location.href = 'login.html';
+                return null;
+            }
+
+            const response = await fetch(`https://checknote-27fe.onrender.com/api/v1${endpoint}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`,
+                },
+                body: JSON.stringify(data),
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                try {
+                    const errorData = JSON.parse(errorText);
+                    if (response.status === 401) {
+                        if (errorData.message && errorData.message.toLowerCase().includes("contraseña")) {
+                            throw new Error("La contraseña actual es incorrecta");
+                        }
+                        localStorage.clear();
+                        showMessage('error', "Tu sesión ha expirado. Redirigiendo al login...");
+                        setTimeout(() => window.location.href = 'login.html', 2000);
+                        return null;
+                    }
+                    throw new Error(errorData.message || errorData.error || `Error ${response.status}`);
+                } catch (parseError) {
+                    if (parseError.message && parseError.message !== `Unexpected token '<'`) {
+                        throw parseError;
+                    }
+                    throw new Error(`Error ${response.status}: ${errorText || response.statusText}`);
+                }
+            }
+
+            try {
+                const responseText = await response.text();
+                return responseText ? JSON.parse(responseText) : {};
+            } catch (parseError) {
+                return { success: true };
+            }
+        }
+
+        // ============================================
+        // EVENT LISTENERS
+        // ============================================
+
+        /**
+         * Configura todos los event listeners de la página
+         */
+        function addEventListeners() {
+            // Formulario personal
+            if (elements.formPersonal) {
+                elements.formPersonal.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    loading = true;
+                    setLoading(elements.btnPersonal, true);
+                    hideMessage('error');
+                    hideMessage('success');
+
+                    try {
+                        const nombres = elements.inputNombres.value.trim();
+                        const apellidos = elements.inputApellidos.value.trim();
+                        const edad = elements.inputEdad.value.trim();
+
+                        if (!nombres) throw new Error("El nombre es requerido");
+                        if (!apellidos) throw new Error("Los apellidos son requeridos");
+
+                        const updateData = { nombres, apellidos };
+                        if (edad) {
+                            const edadNum = parseInt(edad);
+                            if (isNaN(edadNum) || edadNum < 13 || edadNum > 120) {
+                                throw new Error("La edad debe ser un número válido entre 13 y 120");
+                            }
+                            updateData.edad = edadNum;
+                        }
+
+                        await makeRequest('/users/me', updateData);
+                        personalData.nombres = nombres;
+                        personalData.apellidos = apellidos;
+                        personalData.edad = edad;
+                        localStorage.setItem('userName', nombres);
+                        elements.topbarUsername.textContent = nombres;
+                        await cargarDatosUsuario();
+                        showMessage('success', "Información personal actualizada correctamente");
+                    } catch (err) {
+                        showMessage('error', "Error al actualizar la información personal: " + err.message);
+                    } finally {
+                        loading = false;
+                        setLoading(elements.btnPersonal, false);
+                    }
+                });
+            }
+
+            // Formulario cuenta
+            if (elements.formCuenta) {
+                elements.formCuenta.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    loading = true;
+                    setLoading(elements.btnCuenta, true);
+                    hideMessage('error');
+                    hideMessage('success');
+
+                    try {
+                        const email = elements.inputEmail.value.trim();
+                        if (!email) throw new Error("El correo electrónico es requerido");
+
+                        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                        if (!emailRegex.test(email)) {
+                            throw new Error("Por favor ingresa un correo electrónico válido");
+                        }
+
+                        await makeRequest('/users/me', { correo: email.toLowerCase() });
+                        cuentaData.email = email.toLowerCase();
+                        await cargarDatosUsuario();
+                        showMessage('success', "Información de cuenta actualizada correctamente");
+                    } catch (err) {
+                        showMessage('error', "Error al actualizar la información de cuenta: " + err.message);
+                    } finally {
+                        loading = false;
+                        setLoading(elements.btnCuenta, false);
+                    }
+                });
+            }
+
+            // Formulario seguridad
+            if (elements.formSeguridad) {
+                elements.formSeguridad.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    loading = true;
+                    setLoading(elements.btnSeguridad, true);
+                    hideMessage('error');
+                    hideMessage('success');
+
+                    try {
+                        const currentPassword = elements.inputCurrentPassword.value;
+                        const password = elements.inputPassword.value;
+                        const confirmPassword = elements.inputConfirmPassword.value;
+
+                        if (!currentPassword) throw new Error("Debes ingresar tu contraseña actual");
+                        if (!password) throw new Error("Debes ingresar una nueva contraseña");
+                        if (password !== confirmPassword) throw new Error("Las contraseñas no coinciden");
+                        if (password.length < 8) throw new Error("La contraseña debe tener al menos 8 caracteres");
+                        if (currentPassword === password) throw new Error("La nueva contraseña debe ser diferente a la actual");
+
+                        const updateData = {
+                            contrasenaActual: currentPassword,
+                            nuevaContrasena: password,
+                            confirmarNuevaContrasena: confirmPassword
+                        };
+
+                        await makeRequest('/users/me', updateData, true);
+                        showMessage('success', "Contraseña cambiada correctamente");
+                        
+                        // Limpiar formulario
+                        elements.inputCurrentPassword.value = "";
+                        elements.inputPassword.value = "";
+                        elements.inputConfirmPassword.value = "";
+                        
+                    } catch (err) {
+                        showMessage('error', "Error al cambiar la contraseña: " + err.message);
+                    } finally {
+                        loading = false;
+                        setLoading(elements.btnSeguridad, false);
+                    }
+                });
+            }
+
+            // Navegación
+            if (elements.navPersonal) {
+                elements.navPersonal.addEventListener('click', () => showSection('personal'));
+            }
+            if (elements.navCuenta) {
+                elements.navCuenta.addEventListener('click', () => showSection('cuenta'));
+            }
+            if (elements.navSeguridad) {
+                elements.navSeguridad.addEventListener('click', () => showSection('seguridad'));
+            }
+            
+            if (elements.navLogout) {
+                elements.navLogout.addEventListener('click', () => {
+                    localStorage.clear();
+                    window.location.href = 'login.html';
+                });
+            }
+
+            if (elements.btnDeleteAccount) {
+                elements.btnDeleteAccount.addEventListener('click', () => {
+                    window.location.href = 'eliminar-cuenta.html';
+                });
+            }
+        }
+
+        // ============================================
+        // INICIALIZACIÓN
+        // ============================================
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeElements();
+            addEventListeners();
+            
+            const storedUserName = localStorage.getItem('userName');
+            if (storedUserName && elements.topbarUsername) {
+                elements.topbarUsername.textContent = storedUserName;
+            }
+
+            cargarDatosUsuario();
+        });
+    </script>
+    
+</body>
+</html>
