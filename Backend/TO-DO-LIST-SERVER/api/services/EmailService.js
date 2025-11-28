@@ -287,7 +287,6 @@ class EmailService {
             max-width: 120px;
             height: auto;
             margin-bottom: 15px;
-            background: white;
             padding: 10px;
             border-radius: 8px;
           }
@@ -684,7 +683,7 @@ class EmailService {
         'password-reset',
         {
           USER_NAME: 'Usuario de Prueba',
-          RESET_URL: `${process.env.RESET_URL2 || 'https://check-note-fend.vercel.app/olvidar-password2'}/test`,
+          RESET_URL: `${process.env.RESET_URL2 || 'https://check-note-fend.vercel.app/olvidar-password2.html'}/test`,
           EXPIRES_IN: '1 hora'
         }
       );
